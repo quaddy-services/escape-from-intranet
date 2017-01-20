@@ -1,2 +1,2 @@
 # escape-from-intranet
-Escape out of intranet without dealing without authorization of corporate proxy
+Escape out of intranet without dealing with authentication of corporate proxy
