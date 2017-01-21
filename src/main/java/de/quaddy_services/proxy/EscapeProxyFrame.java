@@ -1,8 +1,12 @@
 package de.quaddy_services.proxy;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.function.Consumer;
@@ -15,6 +19,8 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+
+import de.quaddy_services.proxy.events.PortStatusListener;
 
 /**
  *
@@ -40,6 +46,10 @@ public class EscapeProxyFrame extends JFrame {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	private static final JTextField PORT = new JTextField();
+
+	private static final JLabel PORT_STATUS = new JLabel();
+
 	private EscapeProxyConfig config;
 
 	/**
@@ -50,7 +60,32 @@ public class EscapeProxyFrame extends JFrame {
 		super("escape-from-intranet");
 		config = aEscapeProxyConfig;
 
+		config.addStatusListener(createStatusListener());
+
 		initGui();
+	}
+
+	/**
+	 *
+	 */
+	private PortStatusListener createStatusListener() {
+		return new PortStatusListener() {
+			@Override
+			public void statusChanged(boolean aOkFlag, String aText) {
+				EventQueue.invokeLater(new Runnable() {
+
+					@Override
+					public void run() {
+						PORT_STATUS.setText(aText);
+						if (aOkFlag) {
+							PORT_STATUS.setBackground(Color.GREEN.brighter());
+						} else {
+							PORT_STATUS.setBackground(Color.RED.brighter());
+						}
+					}
+				});
+			}
+		};
 	}
 
 	/**
@@ -71,7 +106,30 @@ public class EscapeProxyFrame extends JFrame {
 		tempGbc2.fill = GridBagConstraints.HORIZONTAL;
 		tempGbc2.anchor = GridBagConstraints.WEST;
 
+		GridBagConstraints tempGbc3 = new GridBagConstraints();
+		tempGbc3.gridx = 2;
+		tempGbc3.gridy = 0;
+		tempGbc3.weightx = 1;
+		tempGbc3.fill = GridBagConstraints.HORIZONTAL;
+		tempGbc3.anchor = GridBagConstraints.WEST;
+
 		setLayout(new GridBagLayout());
+
+		add(createLabel("Listen on localhost:"), tempGbc1);
+		add(PORT, tempGbc2);
+		addSetterGetter(PORT, config::setLocalPort, config::getLocalPort);
+		PORT.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(@SuppressWarnings("unused") FocusEvent aE) {
+				config.fireCheckPortEvent();
+			}
+		});
+
+		add(PORT_STATUS, tempGbc3);
+
+		tempGbc1.gridy++;
+		tempGbc2.gridy++;
+		tempGbc3.gridy++;
 
 		add(createLabel("Host:"), tempGbc1);
 		add(HOST, tempGbc2);
@@ -79,6 +137,7 @@ public class EscapeProxyFrame extends JFrame {
 
 		tempGbc1.gridy++;
 		tempGbc2.gridy++;
+		tempGbc3.gridy++;
 
 		add(createLabel("User:"), tempGbc1);
 		add(USER, tempGbc2);
@@ -86,6 +145,7 @@ public class EscapeProxyFrame extends JFrame {
 
 		tempGbc1.gridy++;
 		tempGbc2.gridy++;
+		tempGbc3.gridy++;
 
 		add(createLabel("Password:"), tempGbc1);
 		add(PASSWORD, tempGbc2);
@@ -93,11 +153,12 @@ public class EscapeProxyFrame extends JFrame {
 
 		tempGbc1.gridy++;
 		tempGbc2.gridy++;
+		tempGbc3.gridy++;
 
-		tempGbc1.gridwidth=2;
-		tempGbc1.weighty=1;
-		tempGbc1.fill=GridBagConstraints.BOTH;
-		add(new JTextArea("Log"),tempGbc1);
+		tempGbc1.gridwidth = 3;
+		tempGbc1.weighty = 1;
+		tempGbc1.fill = GridBagConstraints.BOTH;
+		add(new JTextArea("Log"), tempGbc1);
 	}
 
 	/**

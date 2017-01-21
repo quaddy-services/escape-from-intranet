@@ -1,0 +1,24 @@
+package de.quaddy_services.proxy;
+
+import java.lang.Thread.UncaughtExceptionHandler;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ *
+ */
+public class LoggingUncaughtExceptionHandler implements UncaughtExceptionHandler {
+
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(LoggingUncaughtExceptionHandler.class);
+
+	/**
+	 *
+	 */
+	@Override
+	public void uncaughtException(Thread aT, Throwable aE) {
+		LOGGER.error("Error in "+aT,aE);
+	}
+
+}

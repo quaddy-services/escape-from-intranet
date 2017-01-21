@@ -18,6 +18,7 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 /**
  *
  */
@@ -37,6 +38,10 @@ public class EscapeProxy {
 
 		tempEscapeProxyFrame.setSize(new Dimension(500, 400));
 		tempEscapeProxyFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+		Thread.setDefaultUncaughtExceptionHandler(new LoggingUncaughtExceptionHandler());
+		// See java.awt.EventDispatchThread.handlerPropName
+		System.setProperty("sun.awt.exception.handler", LoggingUncaughtExceptionHandler.class.getName());
 
 		addExitListener(tempEscapeProxyFrame, tempProperties);
 		initSystemTray(tempEscapeProxyFrame);

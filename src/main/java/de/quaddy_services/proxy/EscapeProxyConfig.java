@@ -14,9 +14,13 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import javax.swing.event.EventListenerList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import de.quaddy_services.proxy.events.CheckPortListener;
+import de.quaddy_services.proxy.events.PortStatusListener;
 
 /**
  *
@@ -135,5 +139,49 @@ public class EscapeProxyConfig implements Serializable {
 		byte[] tempEncoded = tempKey.getEncoded();
 		properties.setProperty("key", Base64.getEncoder().encodeToString(tempEncoded));
 		return tempEncoded;
+	}
+
+	public String getLocalPort() {
+		String tempLocalPort = properties.getProperty("localPort");
+		if (tempLocalPort==null) {
+			return "0";
+		}
+		try {
+			return Integer.valueOf(tempLocalPort).toString();
+		} catch (NumberFormatException e) {
+			LOGGER.debug("Ignore ",e);
+			return "0";
+		}
+	}
+
+	public void setLocalPort(String aPort) {
+		if (aPort == null) {
+			properties.setProperty("localPort",null);
+		} else {
+			try {
+				properties.setProperty("localPort", Integer.valueOf(aPort).toString());
+			} catch (NumberFormatException e) {
+				LOGGER.debug("Ignore ",e);
+			}
+		}
+
+	}
+
+	private EventListenerList events = new EventListenerList();
+	/**
+	 *
+	 */
+	public void fireCheckPortEvent() {
+		CheckPortListener[] tempListenerList = events.getListeners(CheckPortListener.class);
+		for (CheckPortListener tempListener : tempListenerList) {
+			tempListener.checkPort(Integer.valueOf(getLocalPort()));
+		}
+	}
+
+	/**
+	 *
+	 */
+	public void addStatusListener(PortStatusListener aStatusListener) {
+		events.add(PortStatusListener.class, aStatusListener);
 	}
 }
