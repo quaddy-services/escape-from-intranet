@@ -13,6 +13,7 @@ import java.net.Proxy;
 import java.net.Proxy.Type;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -43,9 +44,9 @@ public class EscapeProxyWorkerSocket extends Thread {
 	@Override
 	public void run() {
 		LOGGER.debug("Started with {}", socket);
-		List<String> tempHeader;
+		List<String> tempHeaders;
 		try {
-			tempHeader = readHeader(socket);
+			tempHeaders = readHeader(socket);
 		} catch (IOException e) {
 			LOGGER.error("Error", e);
 			try {
@@ -60,7 +61,7 @@ public class EscapeProxyWorkerSocket extends Thread {
 			return;
 		}
 
-		if (tempHeader.size() == 0) {
+		if (tempHeaders.size() == 0) {
 			LOGGER.error("Missing header");
 			try {
 				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
@@ -73,44 +74,37 @@ public class EscapeProxyWorkerSocket extends Thread {
 			}
 			return;
 		}
-		String tempFirstLine = tempHeader.get(0);
+		String tempFirstLine = tempHeaders.get(0);
 		StringTokenizer tempFirstLineTokens = new StringTokenizer(tempFirstLine, " ");
 		String tempFirstLine1 = tempFirstLineTokens.nextToken();
 		if (tempFirstLine1.equals("CONNECT")) {
 			// https
 			String tempHostAndPort = tempFirstLineTokens.nextToken();
 			String tempHttpVersion = tempFirstLineTokens.nextToken();
-			Proxy tempProxy = new Proxy(Type.HTTP, new InetSocketAddress(config.getProxyHost(), Integer.valueOf(config.getProxyPort())));
-			Authenticator.setDefault(new Authenticator() {
-				@Override
-				protected PasswordAuthentication getPasswordAuthentication() {
-					return new PasswordAuthentication(config.getProxyUser(), config.getProxyPassword().toCharArray());
-				}
-			});
-			Socket tempTargetSocket = new Socket(tempProxy);
-			StringTokenizer tempHostAndPortTokens = new StringTokenizer(tempHostAndPort, ":");
-			String tempHost = tempHostAndPortTokens.nextToken();
-			String tempPort = tempHostAndPortTokens.nextToken();
+
+			Socket tempTargetSocket;
 			try {
-				if (LOGGER.isDebugEnabled()) {
-					LOGGER.debug("Connect to " + tempHost + ":" + tempPort + " via " + tempProxy);
-				}
-				try {
-					tempTargetSocket.connect(new InetSocketAddress(tempHost, Integer.valueOf(tempPort)));
-				} catch (Error e) {
-					if (e.getCause() instanceof InvocationTargetException) {
-						InvocationTargetException tempInvocationTargetException = (InvocationTargetException) e.getCause();
-						if (tempInvocationTargetException.getTargetException() instanceof IOException) {
-							// Extract the original IOException, see
-							// http://stackoverflow.com/questions/40921296/java-proxy-authentication-ioexception-not-being-thrown/
-							throw (IOException) tempInvocationTargetException.getTargetException();
-						}
+				tempTargetSocket = new Socket(config.getProxyHost(), Integer.valueOf(config.getProxyPort()));
+				OutputStream tempProxyOut = tempTargetSocket.getOutputStream();
+				boolean tempProxyAuthAlreadySent = false;
+				for (String tempHeader : tempHeaders) {
+					if (tempHeader.toLowerCase().startsWith("proxy-authorization:")) {
+						LOGGER.debug("Take Proxy auth from original request {}", tempHeader);
+						tempProxyAuthAlreadySent = true;
 					}
-					// rethrow the original error
-					throw e;
+					LOGGER.debug("Forward {}", tempHeader);
+					tempProxyOut.write((tempHeader + "\r\n").getBytes());
 				}
+				if (!tempProxyAuthAlreadySent) {
+					String tempAuth = new String(Base64.getEncoder().encode((config.getProxyUser() + ":" + config.getProxyPassword()).getBytes()));
+					String tempProxyHeaderAuth = "Proxy-Authorization: Basic " + tempAuth;
+					LOGGER.debug("Add {}", tempProxyHeaderAuth);
+					tempProxyOut.write((tempProxyHeaderAuth + "\r\n").getBytes());
+				}
+				tempProxyOut.write(("\r\n").getBytes());
+				tempProxyOut.flush();
 			} catch (IOException | RuntimeException e) {
-				LOGGER.error("Error connecting to " + tempHost + ":" + tempPort + " via " + tempProxy, e);
+				LOGGER.error("Error connecting to " + tempHostAndPort + " via " + config.getProxyHost(), e);
 				try {
 					OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
 					String tempMessage = e.getMessage();
@@ -130,15 +124,19 @@ public class EscapeProxyWorkerSocket extends Thread {
 				}
 				return;
 			}
-			try {
-				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
-				outputStreamWriter.write(tempHttpVersion + " 200 Connection established\r\n");
-				outputStreamWriter.write("Proxy-agent: escape-from-intranet\r\n");
-				outputStreamWriter.write("\r\n");
-				outputStreamWriter.flush();
-			} catch (IOException e) {
-				LOGGER.error("Error sending response to " + socket, e);
-			}
+
+			new Thread() {
+				@Override
+				public void run() {
+					forwardData(tempTargetSocket, socket);
+				}
+			}.start();
+			new Thread() {
+				@Override
+				public void run() {
+					forwardData(socket, tempTargetSocket);
+				}
+			}.start();
 		} else {
 			// http
 		}
@@ -189,6 +187,10 @@ public class EscapeProxyWorkerSocket extends Thread {
 					do {
 						read = inputStream.read(buffer);
 						if (read > 0) {
+							if (LOGGER.isDebugEnabled()) {
+								LOGGER.debug("Write to " + outputSocket + ":");
+								LOGGER.debug(new String(buffer, 0, read));
+							}
 							outputStream.write(buffer, 0, read);
 							if (inputStream.available() < 1) {
 								outputStream.flush();
@@ -206,7 +208,7 @@ public class EscapeProxyWorkerSocket extends Thread {
 				}
 			}
 		} catch (IOException e) {
-			e.printStackTrace(); // TODO: implement catch
+			LOGGER.error("Error", e);
 		}
 	}
 }
