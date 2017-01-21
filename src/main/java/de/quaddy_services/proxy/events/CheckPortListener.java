@@ -10,6 +10,6 @@ public interface CheckPortListener extends EventListener {
 	/**
 	 *
 	 */
-	void checkPort(Integer aPort);
+	void checkPort(int aPort);
 
 }

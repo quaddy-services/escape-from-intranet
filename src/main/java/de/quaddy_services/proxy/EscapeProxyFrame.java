@@ -29,26 +29,28 @@ public class EscapeProxyFrame extends JFrame {
 	/**
 	 *
 	 */
-	private static final JPasswordField PASSWORD = new JPasswordField();
+	private static final JPasswordField PROXY_PASSWORD = new JPasswordField();
 
 	/**
 	 *
 	 */
-	private static final JTextField HOST = new JTextField();
+	private static final JTextField PROXY_HOST = new JTextField();
 
 	/**
 	 *
 	 */
-	private static final JTextField USER = new JTextField();
+	private static final JTextField PROXY_USER = new JTextField();
 
 	/**
 	 *
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static final JTextField PORT = new JTextField();
+	private static final JTextField LOCAL_PORT = new JTextField();
 
-	private static final JLabel PORT_STATUS = new JLabel();
+	private static final JLabel LOCAL_PORT_STATUS = new JLabel();
+
+	private static final JTextField PROXY_PORT = new JTextField();
 
 	private EscapeProxyConfig config;
 
@@ -76,11 +78,11 @@ public class EscapeProxyFrame extends JFrame {
 
 					@Override
 					public void run() {
-						PORT_STATUS.setText(aText);
+						LOCAL_PORT_STATUS.setText(aText);
 						if (aOkFlag) {
-							PORT_STATUS.setBackground(Color.GREEN.brighter());
+							LOCAL_PORT_STATUS.setBackground(Color.GREEN.brighter());
 						} else {
-							PORT_STATUS.setBackground(Color.RED.brighter());
+							LOCAL_PORT_STATUS.setBackground(Color.RED.brighter());
 						}
 					}
 				});
@@ -106,54 +108,56 @@ public class EscapeProxyFrame extends JFrame {
 		tempGbc2.fill = GridBagConstraints.HORIZONTAL;
 		tempGbc2.anchor = GridBagConstraints.WEST;
 
-		GridBagConstraints tempGbc3 = new GridBagConstraints();
-		tempGbc3.gridx = 2;
-		tempGbc3.gridy = 0;
-		tempGbc3.weightx = 1;
-		tempGbc3.fill = GridBagConstraints.HORIZONTAL;
-		tempGbc3.anchor = GridBagConstraints.WEST;
-
 		setLayout(new GridBagLayout());
 
 		add(createLabel("Listen on localhost:"), tempGbc1);
-		add(PORT, tempGbc2);
-		addSetterGetter(PORT, config::setLocalPort, config::getLocalPort);
-		PORT.addFocusListener(new FocusAdapter() {
+		add(LOCAL_PORT, tempGbc2);
+		addSetterGetter(LOCAL_PORT, config::setLocalPort, config::getLocalPort);
+		LOCAL_PORT.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(@SuppressWarnings("unused") FocusEvent aE) {
 				config.fireCheckPortEvent();
 			}
 		});
 
-		add(PORT_STATUS, tempGbc3);
+		tempGbc1.gridy++;
+		tempGbc2.gridy++;
+
+		tempGbc1.gridwidth = 3;
+		add(LOCAL_PORT_STATUS, tempGbc1);
+		LOCAL_PORT_STATUS.setOpaque(true);
+		tempGbc1.gridwidth = 1;
 
 		tempGbc1.gridy++;
 		tempGbc2.gridy++;
-		tempGbc3.gridy++;
 
-		add(createLabel("Host:"), tempGbc1);
-		add(HOST, tempGbc2);
-		addSetterGetter(HOST, config::setProxyHost, config::getProxyHost);
-
-		tempGbc1.gridy++;
-		tempGbc2.gridy++;
-		tempGbc3.gridy++;
-
-		add(createLabel("User:"), tempGbc1);
-		add(USER, tempGbc2);
-		addSetterGetter(USER, config::setProxyUser, config::getProxyUser);
+		add(createLabel("ProxyHost:"), tempGbc1);
+		add(PROXY_HOST, tempGbc2);
+		addSetterGetter(PROXY_HOST, config::setProxyHost, config::getProxyHost);
 
 		tempGbc1.gridy++;
 		tempGbc2.gridy++;
-		tempGbc3.gridy++;
 
-		add(createLabel("Password:"), tempGbc1);
-		add(PASSWORD, tempGbc2);
-		addSetterGetter(PASSWORD, config::setProxyPassword, config::getProxyPassword);
+		add(createLabel("ProxyPort:"), tempGbc1);
+		add(PROXY_PORT, tempGbc2);
+		addSetterGetter(PROXY_PORT, config::setProxyPort, config::getProxyPort);
 
 		tempGbc1.gridy++;
 		tempGbc2.gridy++;
-		tempGbc3.gridy++;
+
+		add(createLabel("ProxyUser:"), tempGbc1);
+		add(PROXY_USER, tempGbc2);
+		addSetterGetter(PROXY_USER, config::setProxyUser, config::getProxyUser);
+
+		tempGbc1.gridy++;
+		tempGbc2.gridy++;
+
+		add(createLabel("ProxyPassword:"), tempGbc1);
+		add(PROXY_PASSWORD, tempGbc2);
+		addSetterGetter(PROXY_PASSWORD, config::setProxyPassword, config::getProxyPassword);
+
+		tempGbc1.gridy++;
+		tempGbc2.gridy++;
 
 		tempGbc1.gridwidth = 3;
 		tempGbc1.weighty = 1;

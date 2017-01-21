@@ -143,31 +143,32 @@ public class EscapeProxyConfig implements Serializable {
 
 	public String getLocalPort() {
 		String tempLocalPort = properties.getProperty("localPort");
-		if (tempLocalPort==null) {
+		if (tempLocalPort == null) {
 			return "0";
 		}
 		try {
 			return Integer.valueOf(tempLocalPort).toString();
 		} catch (NumberFormatException e) {
-			LOGGER.debug("Ignore ",e);
+			LOGGER.debug("Ignore ", e);
 			return "0";
 		}
 	}
 
 	public void setLocalPort(String aPort) {
 		if (aPort == null) {
-			properties.setProperty("localPort",null);
+			properties.setProperty("localPort", null);
 		} else {
 			try {
 				properties.setProperty("localPort", Integer.valueOf(aPort).toString());
 			} catch (NumberFormatException e) {
-				LOGGER.debug("Ignore ",e);
+				LOGGER.debug("Ignore ", e);
 			}
 		}
 
 	}
 
 	private EventListenerList events = new EventListenerList();
+
 	/**
 	 *
 	 */
@@ -183,5 +184,51 @@ public class EscapeProxyConfig implements Serializable {
 	 */
 	public void addStatusListener(PortStatusListener aStatusListener) {
 		events.add(PortStatusListener.class, aStatusListener);
+	}
+
+	/**
+	 *
+	 */
+	public void addCheckPortListener(CheckPortListener aCheckPortListener) {
+		events.add(CheckPortListener.class, aCheckPortListener);
+	}
+
+	/**
+	 *
+	 */
+	public void firePortStatus(boolean anOkFlag, String aStatus) {
+		PortStatusListener[] tempListenerList = events.getListeners(PortStatusListener.class);
+		for (PortStatusListener tempListener : tempListenerList) {
+			tempListener.statusChanged(anOkFlag, aStatus);
+		}
+	}
+
+	/**
+	 *
+	 */
+	public String getProxyPort() {
+		String tempPort = properties.getProperty("ProxyPort");
+		if (tempPort == null) {
+			return "0";
+		}
+		try {
+			return Integer.valueOf(tempPort).toString();
+		} catch (NumberFormatException e) {
+			LOGGER.debug("Ignore ", e);
+			return "0";
+		}
+
+	}
+
+	public void setProxyPort(String aPort) {
+		if (aPort == null) {
+			properties.setProperty("ProxyPort", null);
+		} else {
+			try {
+				properties.setProperty("ProxyPort", Integer.valueOf(aPort).toString());
+			} catch (NumberFormatException e) {
+				LOGGER.debug("Ignore ", e);
+			}
+		}
 	}
 }

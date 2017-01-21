@@ -48,7 +48,7 @@ public class EscapeProxy {
 
 		setVisible(tempEscapeProxyFrame);
 
-		new EscapeProxyWorker(tempEscapeProxyConfig).start();
+		new EscapeProxyWorkerAccept(tempEscapeProxyConfig).start();
 	}
 	/**
 	 * Before loading logback.xml, set the properties
