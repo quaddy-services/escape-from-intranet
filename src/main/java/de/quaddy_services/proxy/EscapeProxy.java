@@ -23,9 +23,11 @@ import org.slf4j.LoggerFactory;
  */
 public class EscapeProxy {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(EscapeProxy.class);
+	private static Logger LOGGER;
 
 	public static void main(String[] args) {
+		initializeLogger();
+
 		LOGGER.info("Start");
 		Properties tempProperties = readConfig();
 
@@ -40,9 +42,21 @@ public class EscapeProxy {
 		initSystemTray(tempEscapeProxyFrame);
 
 		setVisible(tempEscapeProxyFrame);
-		
+
 		new EscapeProxyWorker(tempEscapeProxyConfig).start();
 	}
+	/**
+	 * Before loading logback.xml, set the properties
+	 */
+	private static void initializeLogger() {
+		String tempDefaultLevel = System.getProperty("defaultLogLevel");
+		if (tempDefaultLevel ==null) {
+			System.setProperty("defaultLogLevel","info");
+		}
+		LOGGER = LoggerFactory.getLogger(EscapeProxy.class);
+	}
+
+
 
 	/**
 	 * @return
@@ -57,6 +71,7 @@ public class EscapeProxy {
 				tempProperties.loadFromXML(tempIn);
 				tempIn.close();
 				LOGGER.info("Loaded config "+tempFile.getAbsolutePath());
+				LOGGER.debug("Content={}",tempProperties);
 			} catch (IOException e) {
 				LOGGER.error("error", e);
 			}
