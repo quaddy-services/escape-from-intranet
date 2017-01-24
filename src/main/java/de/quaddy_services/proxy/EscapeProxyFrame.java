@@ -9,23 +9,30 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import de.quaddy_services.proxy.events.LogEventListener;
 import de.quaddy_services.proxy.events.PortStatusListener;
 
 /**
  *
  */
 public class EscapeProxyFrame extends JFrame {
+	/**
+	 *
+	 */
+	private static final JTextArea LOG_FIELD = new JTextArea("");
+
 	/**
 	 *
 	 */
@@ -64,7 +71,34 @@ public class EscapeProxyFrame extends JFrame {
 
 		config.addStatusListener(createStatusListener());
 
+		config.addLogEventListener(createLogEventListener());
+
 		initGui();
+	}
+
+	/**
+	 *
+	 */
+	private LogEventListener createLogEventListener() {
+		return new LogEventListener() {
+			/**
+			 *
+			 */
+			@Override
+			public void updatedLog(List<String> aLog) {
+				StringBuilder tempString = new StringBuilder();
+				for (String tempLine : aLog) {
+					tempString.append(tempLine);
+					tempString.append("\n");
+				}
+				EventQueue.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						LOG_FIELD.setText(tempString.toString());
+					}
+				});
+			}
+		};
 	}
 
 	/**
@@ -162,7 +196,7 @@ public class EscapeProxyFrame extends JFrame {
 		tempGbc1.gridwidth = 3;
 		tempGbc1.weighty = 1;
 		tempGbc1.fill = GridBagConstraints.BOTH;
-		add(new JTextArea("Log"), tempGbc1);
+		add(new JScrollPane(LOG_FIELD), tempGbc1);
 	}
 
 	/**
