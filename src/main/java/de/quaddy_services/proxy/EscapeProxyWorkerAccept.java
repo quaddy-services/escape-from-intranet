@@ -47,23 +47,7 @@ public class EscapeProxyWorkerAccept extends Thread {
 			 */
 			@Override
 			public void checkPort(int aPort) {
-				synchronized (this) {
-					if (serverSocket == null) {
-						LOGGER.info("Start on port " + aPort);
-						notifyAll();
-					} else {
-						if (serverSocket.getLocalPort() != aPort) {
-							LOGGER.info("Detected Port change " + aPort);
-							try {
-								serverSocket.close();
-							} catch (IOException e) {
-								LOGGER.error("Could not close Socket " + serverSocket, e);
-								serverSocket = null;
-							}
-							notifyAll();
-						}
-					}
-				}
+				checkForPortUpdate(aPort);
 			}
 		};
 	}
@@ -94,12 +78,13 @@ public class EscapeProxyWorkerAccept extends Thread {
 					LOGGER.info("Create server Socket for " + tempPort);
 					serverSocket = new ServerSocket(tempPort);
 				} catch (IOException e) {
-					LOGGER.error("Error opening port " + tempPort, e);
+					LOGGER.info("Error opening port " + tempPort + e);
+					LOGGER.debug("Details", e);
 					config.firePortStatus(false, "Error opening port " + tempPort + ": " + e);
 					synchronized (this) {
 						try {
 							LOGGER.info("wait for port change");
-							wait();
+							wait(60000);
 							LOGGER.info("continue");
 							continue;
 						} catch (InterruptedException e2) {
@@ -122,13 +107,39 @@ public class EscapeProxyWorkerAccept extends Thread {
 		while (true) {
 			try {
 				Socket tempSocket = aServerSocket.accept();
-				LOGGER.info("Got connection from " + tempSocket.getInetAddress());
+
+				String tempMsg = "Got connection from " + tempSocket.getInetAddress();
+				LOGGER.info(tempMsg);
 
 				EscapeProxyWorkerSocket tempEscapeProxyWorkerSocket = new EscapeProxyWorkerSocket(config, tempSocket);
 				tempEscapeProxyWorkerSocket.start();
 			} catch (IOException | RuntimeException e) {
-				LOGGER.error("Error", e);
+				LOGGER.error("Socket " + serverSocket + " finished " + e);
+				LOGGER.debug("Details", e);
 				return;
+			}
+		}
+	}
+
+	/**
+	 *
+	 */
+	private void checkForPortUpdate(int aPort) {
+		synchronized (this) {
+			if (serverSocket == null) {
+				LOGGER.info("Start on port " + aPort);
+				notifyAll();
+			} else {
+				if (serverSocket.getLocalPort() != aPort) {
+					LOGGER.info("Detected Port change " + aPort);
+					try {
+						serverSocket.close();
+					} catch (IOException e) {
+						LOGGER.error("Could not close Socket " + serverSocket, e);
+					}
+					serverSocket = null;
+					notifyAll();
+				}
 			}
 		}
 	}
