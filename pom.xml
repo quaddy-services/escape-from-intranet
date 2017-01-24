@@ -69,6 +69,8 @@
 						</goals>
 						<phase>package</phase>
 						<configuration>
+						    <appendAssemblyId>false</appendAssemblyId>
+						    <finalName>escape-from-intranet</finalName>
 							<descriptorRefs>
 								<descriptorRef>jar-with-dependencies</descriptorRef>
 							</descriptorRefs>
