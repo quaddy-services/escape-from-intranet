@@ -1,10 +1,12 @@
 package de.quaddy_services.proxy;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalTime;
 import java.util.Base64;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 
 import javax.crypto.BadPaddingException;
@@ -20,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.quaddy_services.proxy.events.CheckPortListener;
+import de.quaddy_services.proxy.events.LogEventListener;
 import de.quaddy_services.proxy.events.PortStatusListener;
 
 /**
@@ -169,6 +172,8 @@ public class EscapeProxyConfig implements Serializable {
 
 	private EventListenerList events = new EventListenerList();
 
+	private LinkedList<String> log = new LinkedList<String>();
+
 	/**
 	 *
 	 */
@@ -201,6 +206,7 @@ public class EscapeProxyConfig implements Serializable {
 		for (PortStatusListener tempListener : tempListenerList) {
 			tempListener.statusChanged(anOkFlag, aStatus);
 		}
+		fireLogEvent(aStatus);
 	}
 
 	/**
@@ -230,5 +236,27 @@ public class EscapeProxyConfig implements Serializable {
 				LOGGER.debug("Ignore ", e);
 			}
 		}
+	}
+
+	/**
+	 *
+	 */
+	public void fireLogEvent(String aMsg) {
+		LocalTime tempTime = LocalTime.now();
+		log.add(tempTime + ":" + aMsg);
+		if (log.size() > 20) {
+			log.removeFirst();
+		}
+		LogEventListener[] tempListenerList = events.getListeners(LogEventListener.class);
+		for (LogEventListener tempListener : tempListenerList) {
+			tempListener.updatedLog(log);
+		}
+	}
+
+	/**
+	 *
+	 */
+	public void addLogEventListener(LogEventListener aLogEventListener) {
+		events.add(LogEventListener.class, aLogEventListener);
 	}
 }
