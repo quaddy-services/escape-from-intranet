@@ -2,6 +2,7 @@ package de.quaddy_services.proxy;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
@@ -42,23 +43,32 @@ public class ProxyTestApp {
 		URL tempUrl = new URL(tempHttp);
 
 		Proxy tempProxy = new Proxy(Type.HTTP, new InetSocketAddress(3128));
-		URLConnection tempConnection = tempUrl.openConnection(tempProxy);
+		HttpURLConnection tempConnection = (HttpURLConnection) tempUrl.openConnection(tempProxy);
 
 		tempConnection.setConnectTimeout(30000);
 		tempConnection.setReadTimeout(30000);
 
-		InputStream in = tempConnection.getInputStream();
+		InputStream in;
+		try {
+			 in = tempConnection.getInputStream();
+		} catch (IOException e) {
+			System.err.println("ResponseCode=" + tempConnection.getResponseCode());
+			System.err.println("ResponseMessage=" + tempConnection.getResponseMessage());
+			throw e;
+		}
 
 		byte[] tempB = new byte[1000];
 		int tempRead = in.read(tempB);
+		int tempTotal = tempRead;
 		if (tempRead > 0) {
 			System.out.println("Result=" + new String(tempB, 0, tempRead));
-			while (tempRead>0) {
+			while (tempRead > 0) {
 				tempRead = in.read(tempB);
-				System.out.println("Read another " + tempRead+" bytes");
+				tempTotal+=tempRead;
+				System.out.println("Read another " + tempRead + " bytes");
 			}
 		}
-
+		System.out.println("Total="+tempTotal);
 		in.close();
 	}
 
