@@ -130,14 +130,13 @@ public class EscapeProxy {
 				LOGGER.info("Exit");
 				System.exit(0);
 			}
-
 			/**
-			 *
+			 * 
 			 */
 			@Override
-			public void windowLostFocus(WindowEvent aE) {
+			public void windowDeactivated(WindowEvent aE) {
+				super.windowDeactivated(aE);
 				saveConfig(aProperties);
-				super.windowLostFocus(aE);
 			}
 		});
 	}
