@@ -10,7 +10,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,8 @@ import org.slf4j.LoggerFactory;
 public class EscapeProxyWorkerSocket extends Thread {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(EscapeProxyWorkerSocket.class);
+
+	private static Map<String, ProxyDecision> proxyDecisionCache = new HashMap<>();
 
 	private EscapeProxyConfig config;
 	private Socket socket;
@@ -70,116 +74,50 @@ public class EscapeProxyWorkerSocket extends Thread {
 			return;
 		}
 
-		String tempFirstLine = tempHeaders.get(0);
-		config.fireLogEvent(tempFirstLine);
-
 		Socket tempProxySocket = null;
 		Socket tempDirectSocket = null;
-		Socket tempSSLSocket = null;
 		final Socket tempFinalTargetSocket;
-		String tempProxyHost = config.getProxyHost();
-		Integer tempProxyPort = Integer.valueOf(config.getProxyPort());
-		try {
-			try {
-				tempProxySocket = new Socket(tempProxyHost, tempProxyPort);
-			} catch (IOException eProxy) {
-				LOGGER.info("Proxy " + tempProxyHost + ":" + tempProxyPort + " not reachable " + eProxy);
-				LOGGER.debug("Cannot reach proxy ", eProxy);
-				// Try a direct connection
-				URL tempUrl = getUrlFromHeader(tempHeaders);
-				if (tempUrl != null) {
-					try {
-						String tempProtocol = tempUrl.getProtocol();
-						String tempHost = tempUrl.getHost();
-						int tempPort = tempUrl.getPort();
-						if ("http".equalsIgnoreCase(tempProtocol)) {
-							tempDirectSocket = new Socket(tempHost, tempPort);
-						} else if ("https".equalsIgnoreCase(tempProtocol)) {
-							// Use normal socket to let original application do the handshake.
-							// https://github.com/tomakehurst/wiremock/issues/62
-							// "The reason is that HTTPS proxies don't attempt to decrypt the exchange, but make a CONNECT request to the destination and effectively become TCP tunnels."
-							//							SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-							//							tempSSLSocket = (SSLSocket) factory.createSocket(tempHost, tempPort);
-							//							tempSSLSocket.startHandshake();
-							tempSSLSocket = new Socket(tempHost, tempPort);
-						} else {
-							LOGGER.error("Unknown protocol " + tempUrl);
-							throw eProxy;
-						}
-					} catch (IOException eDirect) {
-						LOGGER.info("Direct " + tempUrl + " not reachable " + eDirect);
-						LOGGER.debug("Cannot reach direct ", eDirect);
-						throw eProxy;
-					}
-				} else {
-					LOGGER.debug("Did not find URL in {}", tempHeaders);
-					throw eProxy;
-				}
-			}
-			tempFinalTargetSocket = tempProxySocket != null ? tempProxySocket : tempDirectSocket != null ? tempDirectSocket : tempSSLSocket;
-			if (tempFinalTargetSocket == null) {
-				LOGGER.error("can not happen.");
-				return;
-			}
-			LOGGER.debug("Connected to tempFinalTargetSocket={}", tempFinalTargetSocket);
-			if (tempSSLSocket != null) {
-				try {
-					OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
-					outputStreamWriter.write("HTTP/1.1 200 Connection established" + "\r\n");
-					outputStreamWriter.write("Proxy-agent: escape-from-intranet\r\n");
-					outputStreamWriter.write("\r\n");
-					outputStreamWriter.flush();
-				} catch (IOException e2) {
-					LOGGER.error("Error sending response to " + socket, e2);
-					return;
-				}
 
-			} else {
-				OutputStream tempProxyOut = tempFinalTargetSocket.getOutputStream();
-				boolean tempProxyAuthAlreadySent = false;
-				for (String tempHeader : tempHeaders) {
-					if (tempHeader.toLowerCase().startsWith("proxy-authorization:")) {
-						if (tempDirectSocket != null) {
-							LOGGER.debug("Skip for direct {}", tempHeader);
-							continue;
-						}
-						LOGGER.debug("Take Proxy auth from original request {}", tempHeader);
-						tempProxyAuthAlreadySent = true;
-					}
-					LOGGER.debug("Forward {}", tempHeader);
-					tempProxyOut.write((tempHeader + "\r\n").getBytes());
-				}
-				if (tempProxySocket != null && !tempProxyAuthAlreadySent) {
-					String tempAuth = new String(Base64.getEncoder().encode((config.getProxyUser() + ":" + config.getProxyPassword()).getBytes()));
-					String tempProxyHeaderAuth = "Proxy-Authorization: Basic " + tempAuth;
-					LOGGER.debug("Add {}", tempProxyHeaderAuth);
-					tempProxyOut.write((tempProxyHeaderAuth + "\r\n").getBytes());
-				}
-				tempProxyOut.write(("\r\n").getBytes());
-				tempProxyOut.flush();
-			}
-		} catch (IOException | RuntimeException e) {
-			LOGGER.error("Error connecting to proxy via " + tempProxyHost + " " + tempProxyPort, e);
-			try {
-				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
-				String tempMessage = e.getMessage();
-				String tempResponseMessage;
-				// Maybe: Unable to tunnel through proxy. Proxy returns "HTTP/1.0 407 Proxy Authentication Required"
-				int tempHttpPos = tempMessage.indexOf("HTTP/");
-				if (tempHttpPos >= 0) {
-					// Reply with original Message
-					tempResponseMessage = tempMessage.substring(tempHttpPos);
+		URL tempUrl = getUrlFromHeader(tempHeaders);
+
+		ProxyDecision tempProxyDecision = getProxyDecision(tempUrl);
+
+		if (ProxyDecision.PROXY.equals(tempProxyDecision)) {
+			tempProxySocket = getProxySocket(tempHeaders);
+			if (tempProxySocket == null) {
+				// Try a direct connection
+				tempDirectSocket = getDirectSocket(tempHeaders, tempUrl);
+				if (tempDirectSocket == null) {
+					replyWithBadGateway("Proxy and Direct not responding");
+					return;
 				} else {
-					tempResponseMessage = "HTTP/1.0" + " " + java.net.HttpURLConnection.HTTP_BAD_GATEWAY + " " + e.getClass().getName() + " " + tempMessage;
+					tempProxyDecision = ProxyDecision.DIRECT;
 				}
-				config.fireLogEvent(tempResponseMessage);
-				outputStreamWriter.write(tempResponseMessage + "\r\n");
-				outputStreamWriter.write("Proxy-agent: escape-from-intranet\r\n");
-				outputStreamWriter.write("\r\n");
-				outputStreamWriter.flush();
-			} catch (IOException e2) {
-				LOGGER.error("Error sending response to " + socket, e2);
+			} else {
+				tempProxyDecision = ProxyDecision.PROXY;
 			}
+		} else if (ProxyDecision.DIRECT.equals(tempProxyDecision) || tempProxyDecision == null) {
+			tempDirectSocket = getDirectSocket(tempHeaders, tempUrl);
+			if (tempDirectSocket == null) {
+				// try the proxy
+				tempProxySocket = getProxySocket(tempHeaders);
+				if (tempProxySocket == null) {
+					replyWithBadGateway("Direct and Proxy not responding");
+					return;
+				} else {
+					tempProxyDecision = ProxyDecision.PROXY;
+				}
+			} else {
+				tempProxyDecision = ProxyDecision.DIRECT;
+			}
+		}
+		setProxyDecision(tempUrl, tempProxyDecision);
+
+		config.fireLogEvent(tempUrl + " via " + tempProxyDecision);
+
+		tempFinalTargetSocket = tempProxySocket != null ? tempProxySocket : tempDirectSocket;
+		if (tempFinalTargetSocket == null) {
+			LOGGER.error("can not happen.");
 			return;
 		}
 
@@ -195,6 +133,129 @@ public class EscapeProxyWorkerSocket extends Thread {
 				forwardData(socket, tempFinalTargetSocket);
 			}
 		}.start();
+	}
+
+	/**
+	 *
+	 */
+	private Socket getDirectSocket(List<String> aHeaders, URL aUrl) {
+		if (aUrl != null) {
+			try {
+				String tempProtocol = aUrl.getProtocol();
+				String tempHost = aUrl.getHost();
+				int tempPort = aUrl.getPort();
+				if ("http".equalsIgnoreCase(tempProtocol)) {
+					Socket tempDirectSocket = new Socket(tempHost, tempPort);
+					forwardHeaders(aHeaders, tempDirectSocket, false);
+					return tempDirectSocket;
+				} else if ("https".equalsIgnoreCase(tempProtocol)) {
+					// Use normal socket to let original application do the handshake.
+					// https://github.com/tomakehurst/wiremock/issues/62
+					// "The reason is that HTTPS proxies don't attempt to decrypt the exchange, but make a CONNECT request to the destination and effectively become TCP tunnels."
+					//							SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+					//							tempSSLSocket = (SSLSocket) factory.createSocket(tempHost, tempPort);
+					//							tempSSLSocket.startHandshake();
+					Socket tempSSLSocket = new Socket(tempHost, tempPort);
+					// do not send headers ad it is a "connect" request.
+					try {
+						// Just reply with "connection ok"
+						OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
+						outputStreamWriter.write("HTTP/1.1 200 Connection established" + "\r\n");
+						outputStreamWriter.write("Proxy-agent: escape-from-intranet\r\n");
+						outputStreamWriter.write("\r\n");
+						outputStreamWriter.flush();
+					} catch (IOException e2) {
+						LOGGER.error("Error sending response to " + socket, e2);
+						return null;
+					}
+					return tempSSLSocket;
+				} else {
+					LOGGER.error("Unknown protocol " + aUrl);
+					return null;
+				}
+			} catch (IOException eDirect) {
+				LOGGER.info("Direct " + aUrl + " not reachable " + eDirect);
+				LOGGER.debug("Cannot reach direct ", eDirect);
+				return null;
+			}
+		} else {
+			LOGGER.debug("Did not find URL in {}", aHeaders);
+			return null;
+		}
+	}
+
+	/**
+	 *
+	 */
+	private Socket getProxySocket(List<String> aHeaders) {
+		String tempProxyHost = config.getProxyHost();
+		Integer tempProxyPort = Integer.valueOf(config.getProxyPort());
+		try {
+			Socket tempProxySocket = new Socket(tempProxyHost, tempProxyPort);
+			forwardHeaders(aHeaders, tempProxySocket, true);
+			return tempProxySocket;
+		} catch (IOException eProxy) {
+			LOGGER.info("Proxy " + tempProxyHost + ":" + tempProxyPort + " not reachable " + eProxy);
+			LOGGER.debug("Cannot reach proxy ", eProxy);
+			return null;
+		}
+	}
+
+	/**
+	 * @param aHeaders
+	 * @throws IOException
+	 *
+	 */
+	private void forwardHeaders(List<String> aHeaders, Socket aSocket, boolean anAddProxyAuthentication) throws IOException {
+
+		OutputStream tempProxyOut = aSocket.getOutputStream();
+		for (String tempHeader : aHeaders) {
+			if (tempHeader.toLowerCase().startsWith("proxy-authorization:")) {
+				LOGGER.debug("Skip original {}", tempHeader);
+				continue;
+			}
+			LOGGER.debug("Forward {}", tempHeader);
+			tempProxyOut.write((tempHeader + "\r\n").getBytes());
+		}
+		if (anAddProxyAuthentication) {
+			String tempAuth = new String(Base64.getEncoder().encode((config.getProxyUser() + ":" + config.getProxyPassword()).getBytes()));
+			String tempProxyHeaderAuth = "Proxy-Authorization: Basic " + tempAuth;
+			LOGGER.debug("Add {}", tempProxyHeaderAuth);
+			tempProxyOut.write((tempProxyHeaderAuth + "\r\n").getBytes());
+		}
+		tempProxyOut.write(("\r\n").getBytes());
+		tempProxyOut.flush();
+	}
+
+	/**
+	 *
+	 */
+	private static synchronized ProxyDecision getProxyDecision(URL aUrl) {
+		return proxyDecisionCache.get(aUrl.toExternalForm());
+	}
+
+	/**
+	 *
+	 */
+	private static synchronized void setProxyDecision(URL aUrl, ProxyDecision aProxyDecision) {
+		proxyDecisionCache.put(aUrl.toExternalForm(), aProxyDecision);
+	}
+
+	/**
+	 *
+	 */
+	private void replyWithBadGateway(String aText) {
+		try {
+			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
+			String tempResponseMessage = "HTTP/1.0" + " " + java.net.HttpURLConnection.HTTP_BAD_GATEWAY + " " + aText;
+			config.fireLogEvent(aText);
+			outputStreamWriter.write(tempResponseMessage + "\r\n");
+			outputStreamWriter.write("Proxy-agent: escape-from-intranet\r\n");
+			outputStreamWriter.write("\r\n");
+			outputStreamWriter.flush();
+		} catch (IOException e) {
+			LOGGER.error("Error sending error reply", e);
+		}
 	}
 
 	/**
@@ -317,5 +378,6 @@ public class EscapeProxyWorkerSocket extends Thread {
 			LOGGER.info("Closed" + e);
 			LOGGER.debug("Error", e);
 		}
+		LOGGER.info("finished");
 	}
 }
