@@ -18,7 +18,6 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  *
  */
@@ -50,18 +49,17 @@ public class EscapeProxy {
 
 		new EscapeProxyWorkerAccept(tempEscapeProxyConfig).start();
 	}
+
 	/**
 	 * Before loading logback.xml, set the properties
 	 */
 	private static void initializeLogger() {
 		String tempDefaultLevel = System.getProperty("defaultLogLevel");
-		if (tempDefaultLevel ==null) {
-			System.setProperty("defaultLogLevel","info");
+		if (tempDefaultLevel == null) {
+			System.setProperty("defaultLogLevel", "info");
 		}
 		LOGGER = LoggerFactory.getLogger(EscapeProxy.class);
 	}
-
-
 
 	/**
 	 * @return
@@ -75,8 +73,8 @@ public class EscapeProxy {
 				FileInputStream tempIn = new FileInputStream(tempFile);
 				tempProperties.loadFromXML(tempIn);
 				tempIn.close();
-				LOGGER.info("Loaded config "+tempFile.getAbsolutePath());
-				LOGGER.debug("Content={}",tempProperties);
+				LOGGER.info("Loaded config " + tempFile.getAbsolutePath());
+				LOGGER.debug("Content={}", tempProperties);
 			} catch (IOException e) {
 				LOGGER.error("error", e);
 			}
@@ -132,6 +130,15 @@ public class EscapeProxy {
 				LOGGER.info("Exit");
 				System.exit(0);
 			}
+
+			/**
+			 *
+			 */
+			@Override
+			public void windowLostFocus(WindowEvent aE) {
+				saveConfig(aProperties);
+				super.windowLostFocus(aE);
+			}
 		});
 	}
 
@@ -141,7 +148,7 @@ public class EscapeProxy {
 	protected static void saveConfig(Properties aProperties) {
 		try {
 			File tempFile = getFile();
-			LOGGER.info("Save config "+tempFile.getAbsolutePath());
+			LOGGER.info("Save config " + tempFile.getAbsolutePath());
 			OutputStream tempOut = new FileOutputStream(tempFile);
 			aProperties.storeToXML(tempOut, "");
 			tempOut.close();
