@@ -242,6 +242,7 @@ public class EscapeProxyConfig implements Serializable {
 	 *
 	 */
 	public void fireLogEvent(String aMsg) {
+		LOGGER.info(aMsg);
 		LocalTime tempTime = LocalTime.now();
 		log.add(tempTime + ":" + aMsg);
 		if (log.size() > 20) {
