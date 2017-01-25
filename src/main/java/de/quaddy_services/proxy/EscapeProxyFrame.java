@@ -63,10 +63,11 @@ public class EscapeProxyFrame extends JFrame {
 
 	/**
 	 * @param aEscapeProxyConfig
+	 * @param aName
 	 *
 	 */
-	public EscapeProxyFrame(EscapeProxyConfig aEscapeProxyConfig) {
-		super("escape-from-intranet");
+	public EscapeProxyFrame(EscapeProxyConfig aEscapeProxyConfig, String aName) {
+		super(aName);
 		config = aEscapeProxyConfig;
 
 		config.addStatusListener(createStatusListener());
@@ -207,17 +208,17 @@ public class EscapeProxyFrame extends JFrame {
 		aTextField.addKeyListener(new KeyListener() {
 
 			@Override
-			public void keyTyped(KeyEvent aE) {
+			public void keyTyped(@SuppressWarnings("unused") KeyEvent aE) {
 				aSetter.accept(aTextField.getText());
 			}
 
 			@Override
-			public void keyReleased(KeyEvent aE) {
+			public void keyReleased(@SuppressWarnings("unused") KeyEvent aE) {
 				aSetter.accept(aTextField.getText());
 			}
 
 			@Override
-			public void keyPressed(KeyEvent aE) {
+			public void keyPressed(@SuppressWarnings("unused") KeyEvent aE) {
 				aSetter.accept(aTextField.getText());
 			}
 		});

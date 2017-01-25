@@ -47,7 +47,7 @@ public class EscapeProxy {
 
 		EscapeProxyConfig tempEscapeProxyConfig = new EscapeProxyConfig(tempProperties);
 
-		final EscapeProxyFrame tempEscapeProxyFrame = new EscapeProxyFrame(tempEscapeProxyConfig);
+		final EscapeProxyFrame tempEscapeProxyFrame = new EscapeProxyFrame(tempEscapeProxyConfig, getFrameTitle());
 
 		tempEscapeProxyFrame.setSize(new Dimension(500, 400));
 		tempEscapeProxyFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -65,6 +65,24 @@ public class EscapeProxy {
 		addStatusListener(tempEscapeProxyFrame, tempEscapeProxyConfig);
 
 		new EscapeProxyWorkerAccept(tempEscapeProxyConfig).start();
+	}
+
+	/**
+	 *
+	 */
+	private static String getFrameTitle() {
+		Properties tempProperties = new Properties();
+		InputStream tempIn = EscapeProxy.class.getResourceAsStream("/META-INF/maven/de.quaddy_services/escape-from-intranet/pom.properties");
+		if (tempIn != null) {
+			try {
+				tempProperties.load(tempIn);
+				tempIn.close();
+			} catch (IOException e) {
+				LOGGER.error("Ignore readingerror pom.properties", e);
+			}
+		}
+		String tempVersion = tempProperties.getProperty("version", "?");
+		return "Escape from intranet proxy " + tempVersion;
 	}
 
 	/**
@@ -102,7 +120,7 @@ public class EscapeProxy {
 	 * @return
 	 *
 	 */
-	private static Properties readConfig() {
+	private static synchronized Properties readConfig() {
 		Properties tempProperties = new Properties();
 		File tempFile = getFile();
 		if (tempFile.exists()) {
@@ -261,7 +279,7 @@ public class EscapeProxy {
 	/**
 	 *
 	 */
-	protected static void saveConfig(Properties aProperties) {
+	protected synchronized static void saveConfig(Properties aProperties) {
 		try {
 			File tempFile = getFile();
 			LOGGER.info("Save config " + tempFile.getAbsolutePath());

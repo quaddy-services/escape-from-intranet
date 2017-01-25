@@ -3,7 +3,7 @@
 	<groupId>de.quaddy_services</groupId>
 	<artifactId>escape-from-intranet</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.1</version>
 	<url>https://github.com/quaddy-services/escape-from-intranet</url>
 	<dependencies>
 		<dependency>
@@ -70,7 +70,7 @@
 						<phase>package</phase>
 						<configuration>
 						    <appendAssemblyId>false</appendAssemblyId>
-						    <finalName>escape-from-intranet</finalName>
+						    <finalName>escape-from-intranet-${pom.version}</finalName>
 							<descriptorRefs>
 								<descriptorRef>jar-with-dependencies</descriptorRef>
 							</descriptorRefs>
@@ -79,6 +79,7 @@
 									<mainClass>de.quaddy_services.proxy.EscapeProxy</mainClass>
 								</manifest>
 							</archive>
+							<pomPropertiesFile/>
 						</configuration>
 					</execution>
 				</executions>
