@@ -235,14 +235,14 @@ public class EscapeProxyWorkerSocket extends Thread {
 	 *
 	 */
 	private static synchronized ProxyDecision getProxyDecision(URL aUrl) {
-		return proxyDecisionCache.get(aUrl.toExternalForm());
+		return proxyDecisionCache.get(aUrl.getHost());
 	}
 
 	/**
 	 *
 	 */
 	private static synchronized void setProxyDecision(URL aUrl, ProxyDecision aProxyDecision) {
-		proxyDecisionCache.put(aUrl.toExternalForm(), aProxyDecision);
+		proxyDecisionCache.put(aUrl.getHost(), aProxyDecision);
 	}
 
 	/**
