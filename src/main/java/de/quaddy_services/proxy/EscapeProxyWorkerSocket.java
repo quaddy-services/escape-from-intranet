@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
@@ -145,7 +146,8 @@ public class EscapeProxyWorkerSocket extends Thread {
 				String tempHost = aUrl.getHost();
 				int tempPort = aUrl.getPort();
 				if ("http".equalsIgnoreCase(tempProtocol)) {
-					Socket tempDirectSocket = new Socket(tempHost, tempPort);
+					Socket tempDirectSocket = new Socket();
+					tempDirectSocket.connect(new InetSocketAddress(tempHost, tempPort), 5000);
 					forwardHeaders(aHeaders, tempDirectSocket, false);
 					return tempDirectSocket;
 				} else if ("https".equalsIgnoreCase(tempProtocol)) {
@@ -155,7 +157,8 @@ public class EscapeProxyWorkerSocket extends Thread {
 					//							SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 					//							tempSSLSocket = (SSLSocket) factory.createSocket(tempHost, tempPort);
 					//							tempSSLSocket.startHandshake();
-					Socket tempSSLSocket = new Socket(tempHost, tempPort);
+					Socket tempSSLSocket = new Socket();
+					tempSSLSocket.connect(new InetSocketAddress(tempHost, tempPort), 5000);
 					// do not send headers ad it is a "connect" request.
 					try {
 						// Just reply with "connection ok"
@@ -191,7 +194,8 @@ public class EscapeProxyWorkerSocket extends Thread {
 		String tempProxyHost = config.getProxyHost();
 		Integer tempProxyPort = Integer.valueOf(config.getProxyPort());
 		try {
-			Socket tempProxySocket = new Socket(tempProxyHost, tempProxyPort);
+			Socket tempProxySocket = new Socket();
+			tempProxySocket.connect(new InetSocketAddress(tempProxyHost, tempProxyPort), 5000);
 			forwardHeaders(aHeaders, tempProxySocket, true);
 			return tempProxySocket;
 		} catch (IOException eProxy) {
