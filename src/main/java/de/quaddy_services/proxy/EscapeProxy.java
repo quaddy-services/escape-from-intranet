@@ -177,7 +177,7 @@ public class EscapeProxy {
 				}
 			});
 			aEscapeProxyConfig.addStatusListener(new PortStatusListener() {
-				private boolean currentStatus = false;
+				private Boolean currentStatus = null;
 
 				@Override
 				public void statusChanged(boolean aOkFlag, String aText) {
@@ -191,7 +191,8 @@ public class EscapeProxy {
 								tempTrayIcon.setToolTip(aText);
 							}
 						});
-						if (currentStatus ^ aOkFlag) {
+						if (currentStatus == null || currentStatus ^ aOkFlag) {
+							// show first status or changes
 							EventQueue.invokeLater(new Runnable() {
 								@Override
 								public void run() {
