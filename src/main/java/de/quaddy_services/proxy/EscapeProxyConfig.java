@@ -19,12 +19,11 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.event.EventListenerList;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.quaddy_services.proxy.events.CheckPortListener;
 import de.quaddy_services.proxy.events.LogEventListener;
 import de.quaddy_services.proxy.events.PortStatusListener;
+import de.quaddy_services.proxy.logging.Logger;
+import de.quaddy_services.proxy.logging.LoggerFactory;
 
 /**
  *

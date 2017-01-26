@@ -27,10 +27,9 @@ import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.quaddy_services.proxy.events.PortStatusListener;
+import de.quaddy_services.proxy.logging.Logger;
+import de.quaddy_services.proxy.logging.LoggerFactory;
 
 /**
  *

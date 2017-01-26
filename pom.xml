@@ -3,21 +3,8 @@
 	<groupId>de.quaddy_services</groupId>
 	<artifactId>escape-from-intranet</artifactId>
 	<packaging>jar</packaging>
-	<version>1.3</version>
+	<version>1.4</version>
 	<url>https://github.com/quaddy-services/escape-from-intranet</url>
-	<dependencies>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			 <version>1.1.7</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.11</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
 	<build>
 		<plugins>
 			<plugin>
@@ -32,6 +19,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<configuration>
+				    <finalName>escape-from-intranet</finalName>
 					<archive>
 						<manifest>
 							<mainClass>de.quaddy_services.proxy.EscapeProxy</mainClass>
@@ -58,31 +46,6 @@
 					<downloadJavadocs>true</downloadJavadocs>
 					<downloadSources>true</downloadSources>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>attached</goal>
-						</goals>
-						<phase>package</phase>
-						<configuration>
-						    <appendAssemblyId>false</appendAssemblyId>
-						    <finalName>escape-from-intranet</finalName>
-							<descriptorRefs>
-								<descriptorRef>jar-with-dependencies</descriptorRef>
-							</descriptorRefs>
-							<archive>
-								<manifest>
-									<mainClass>de.quaddy_services.proxy.EscapeProxy</mainClass>
-								</manifest>
-							</archive>
-							<pomPropertiesFile/>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>

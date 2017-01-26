@@ -10,10 +10,9 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.quaddy_services.proxy.events.CheckPortListener;
+import de.quaddy_services.proxy.logging.Logger;
+import de.quaddy_services.proxy.logging.LoggerFactory;
 
 /**
  *
@@ -120,7 +119,7 @@ public class EscapeProxyWorkerAccept extends Thread {
 					EscapeProxyWorkerSocket tempEscapeProxyWorkerSocket = new EscapeProxyWorkerSocket(config, tempSocket);
 					tempEscapeProxyWorkerSocket.start();
 				} else {
-					config.fireLogEvent(tempInetAddress+" not localhost, closing " + tempSocket);
+					config.fireLogEvent(tempInetAddress + " not localhost, closing " + tempSocket);
 					tempSocket.close();
 				}
 			} catch (IOException | RuntimeException e) {
@@ -132,6 +131,7 @@ public class EscapeProxyWorkerAccept extends Thread {
 	}
 
 	private Set<String> isLocalhostCache = new HashSet<>();
+
 	/**
 	 *
 	 */
