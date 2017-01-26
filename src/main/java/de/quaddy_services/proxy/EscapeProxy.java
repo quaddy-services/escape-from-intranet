@@ -177,17 +177,35 @@ public class EscapeProxy {
 				}
 			});
 			aEscapeProxyConfig.addStatusListener(new PortStatusListener() {
+				private boolean currentStatus = false;
 
 				@Override
 				public void statusChanged(boolean aOkFlag, String aText) {
+					if (SystemTray.isSupported()) {
+						EventQueue.invokeLater(new Runnable() {
+							@Override
+							public void run() {
+								TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
+								tempTrayIcon.setImageAutoSize(true);
+								tempTrayIcon.setImage(trayImage[aOkFlag ? 1 : 0]);
+								tempTrayIcon.setToolTip(aText);
+							}
+						});
+						if (currentStatus ^ aOkFlag) {
+							EventQueue.invokeLater(new Runnable() {
+								@Override
+								public void run() {
+									TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
+									tempTrayIcon.displayMessage("Status change", aText, MessageType.INFO);
+								}
+							});
+						}
+						currentStatus = aOkFlag;
+					}
 					EventQueue.invokeLater(new Runnable() {
-
 						@Override
 						public void run() {
-							TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
-							tempTrayIcon.setImageAutoSize(true);
-							tempTrayIcon.setImage(trayImage[aOkFlag ? 1 : 0]);
-							tempTrayIcon.setToolTip(aText);
+							aEscapeProxyFrame.setIconImage(trayImage[aOkFlag ? 1 : 0]);
 						}
 					});
 				}
