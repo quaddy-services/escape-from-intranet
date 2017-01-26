@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
@@ -244,13 +245,18 @@ public class EscapeProxyConfig implements Serializable {
 	public void fireLogEvent(String aMsg) {
 		LOGGER.info(aMsg);
 		LocalTime tempTime = LocalTime.now();
-		log.add(tempTime + ":" + aMsg);
-		if (log.size() > 20) {
-			log.removeFirst();
+		// #1 Take a copy to avoid Nullpointers when iterating
+		List<String> tempCopyOfLog;
+		synchronized (log) {
+			log.add(tempTime + ":" + aMsg);
+			if (log.size() > 20) {
+				log.removeFirst();
+			}
+			tempCopyOfLog = new ArrayList<>(log);
 		}
 		LogEventListener[] tempListenerList = events.getListeners(LogEventListener.class);
 		for (LogEventListener tempListener : tempListenerList) {
-			tempListener.updatedLog(log);
+			tempListener.updatedLog(tempCopyOfLog);
 		}
 	}
 
