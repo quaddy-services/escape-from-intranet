@@ -1,7 +1,7 @@
 package de.quaddy_services.proxy.logging;
 
 /**
- * 
+ *
  */
 public class Logger {
 
@@ -11,7 +11,7 @@ public class Logger {
 	private Boolean traceEnabled;
 
 	/**
-	 * 
+	 *
 	 */
 	public Logger(String aPrefix, FileLogger aFile) {
 		prefix = aPrefix;
@@ -19,21 +19,21 @@ public class Logger {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void info(String aMessage) {
 		info(aMessage, (Throwable) null);
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void error(String aMessage, Throwable aE) {
 		fileLogger.log(prefix, "error", aMessage, aE);
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void debug(String aMessage, Throwable aE) {
 		if (isDebugEnabled()) {
@@ -42,7 +42,7 @@ public class Logger {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void debug(String aString, Object anObject) {
 		if (isDebugEnabled()) {
@@ -51,12 +51,16 @@ public class Logger {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public boolean isDebugEnabled() {
 		if (debugEnabled == null) {
-			String tempDefaultLevel = System.getProperty("defaultLogLevel");
-			debugEnabled = "debug".equalsIgnoreCase(tempDefaultLevel);
+			if (isTraceEnabled()) {
+				debugEnabled = true;
+			} else {
+				String tempDefaultLevel = System.getProperty("defaultLogLevel");
+				debugEnabled = "debug".equalsIgnoreCase(tempDefaultLevel);
+			}
 		}
 		return debugEnabled;
 	}
@@ -70,14 +74,14 @@ public class Logger {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void debug(String aString) {
 		debug(aString, (Throwable) null);
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void info(String aMessage, Throwable aE) {
 		fileLogger.log(prefix, "info", aMessage, aE);
@@ -85,21 +89,21 @@ public class Logger {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void error(String aString) {
 		error(aString, (Throwable) null);
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void debug(String aString, Object aO1, Object aO2) {
 		debug(aString.replaceFirst("\\{\\}", String.valueOf(aO1)).replaceFirst("\\{\\}", String.valueOf(aO2)));
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void trace(String aString) {
 		if (isTraceEnabled()) {
