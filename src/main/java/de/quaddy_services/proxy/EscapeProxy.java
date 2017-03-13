@@ -256,11 +256,12 @@ public class EscapeProxy {
 			@Override
 			public void windowClosing(@SuppressWarnings("unused") WindowEvent aE) {
 				tempEscapeProxyFrame.setVisible(false);
+				saveConfig(aProperties);
+				LOGGER.info("Window Closing");
 				Timer tempTimer = new Timer(5000, new ActionListener() {
 
 					@Override
 					public void actionPerformed(@SuppressWarnings("unused") ActionEvent aE2) {
-						saveConfig(aProperties);
 						LOGGER.info("Exit");
 						System.exit(0);
 					}
