@@ -38,6 +38,8 @@ public class EscapeProxy {
 
 	private static Logger LOGGER;
 
+	private static boolean applicationIsExiting = false;
+
 	public static void main(String[] args) throws IOException {
 		initializeLogger();
 
@@ -57,7 +59,7 @@ public class EscapeProxy {
 
 		trayImage = new Image[] { getImage("offline.png"), getImage("online.png") };
 
-		addExitListener(tempEscapeProxyFrame, tempProperties);
+		addWindowListener(tempEscapeProxyFrame, tempProperties);
 		initSystemTray(tempEscapeProxyFrame, tempEscapeProxyConfig);
 
 		setVisible(tempEscapeProxyFrame, tempEscapeProxyConfig);
@@ -129,6 +131,8 @@ public class EscapeProxy {
 				tempIn.close();
 				LOGGER.info("Loaded config " + tempFile.getAbsolutePath());
 				LOGGER.debug("Content={}", tempProperties);
+				previouslySavedProperties = new Properties();
+				previouslySavedProperties.putAll(tempProperties);
 			} catch (IOException e) {
 				LOGGER.error("error", e);
 			}
@@ -145,6 +149,8 @@ public class EscapeProxy {
 	}
 
 	private static Image[] trayImage;
+
+	private static Properties previouslySavedProperties;
 
 	/**
 	 * @param aEscapeProxyConfig
@@ -248,7 +254,7 @@ public class EscapeProxy {
 	 * @param aProperties
 	 *
 	 */
-	private static void addExitListener(final EscapeProxyFrame tempEscapeProxyFrame, Properties aProperties) {
+	private static void addWindowListener(final EscapeProxyFrame tempEscapeProxyFrame, Properties aProperties) {
 		tempEscapeProxyFrame.addWindowListener(new WindowAdapter() {
 			/**
 			 *
@@ -263,6 +269,7 @@ public class EscapeProxy {
 					@Override
 					public void actionPerformed(@SuppressWarnings("unused") ActionEvent aE2) {
 						LOGGER.info("Exit");
+						setApplicationIsExiting(true);
 						System.exit(0);
 					}
 				});
@@ -274,12 +281,12 @@ public class EscapeProxy {
 			}
 
 			/**
-			 *
+			 * called when windows looses focus.
 			 */
 			@Override
 			public void windowDeactivated(WindowEvent aE) {
-				super.windowDeactivated(aE);
 				saveConfig(aProperties);
+				super.windowDeactivated(aE);
 			}
 
 			/**
@@ -298,15 +305,44 @@ public class EscapeProxy {
 	/**
 	 *
 	 */
-	protected synchronized static void saveConfig(Properties aProperties) {
+	private synchronized static void saveConfig(Properties aProperties) {
+		if (isApplicationIsExiting()) {
+			LOGGER.info("Not saving as already Sytem.exit() is in progress");
+			return;
+		}
+		if (previouslySavedProperties == null || !previouslySavedProperties.equals(aProperties)) {
+			saveConfigFile(aProperties);
+		} else {
+			LOGGER.debug("Skip saving same properties");
+		}
+		previouslySavedProperties = new Properties();
+		previouslySavedProperties.putAll(aProperties);
+	}
+
+	private static void saveConfigFile(Properties aProperties) {
 		try {
 			File tempFile = getFile();
-			LOGGER.info("Save config " + tempFile.getAbsolutePath());
+			LOGGER.info("Save config " + tempFile.getAbsolutePath() + " ...");
 			OutputStream tempOut = new FileOutputStream(tempFile);
 			aProperties.storeToXML(tempOut, "");
 			tempOut.close();
+			LOGGER.info("Saved config " + tempFile.getAbsolutePath());
 		} catch (IOException e) {
 			LOGGER.error("error", e);
 		}
+	}
+
+	/**
+	 * @see #applicationIsExiting
+	 */
+	public synchronized static boolean isApplicationIsExiting() {
+		return applicationIsExiting;
+	}
+
+	/**
+	 * @see #applicationIsExiting
+	 */
+	public synchronized static void setApplicationIsExiting(boolean aApplicationIsExiting) {
+		applicationIsExiting = aApplicationIsExiting;
 	}
 }
