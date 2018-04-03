@@ -235,7 +235,20 @@ public class EscapeProxyWorkerSocket extends Thread {
 	 *
 	 */
 	private static synchronized ProxyDecision getProxyDecision(URL aUrl) {
-		return proxyDecisionCache.get(aUrl.getHost());
+		String tempHost = aUrl.getHost();
+		if ("localhost".equals(tempHost)) {
+			LOGGER.info("localhost never goes via proxy: " + tempHost);
+			return ProxyDecision.DIRECT;
+		}
+		if (tempHost.startsWith("127.")) {
+			LOGGER.info("localhost never goes via proxy: " + tempHost);
+			return ProxyDecision.DIRECT;
+		}
+		if (tempHost.startsWith("::1")) {
+			LOGGER.info("localhost never goes via proxy: " + tempHost);
+			return ProxyDecision.DIRECT;
+		}
+		return proxyDecisionCache.get(tempHost);
 	}
 
 	/**
