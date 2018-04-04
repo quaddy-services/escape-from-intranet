@@ -83,7 +83,7 @@ public class EscapeProxyWorkerSocket extends Thread {
 
 		ProxyDecision tempProxyDecision = getProxyDecision(tempUrl);
 
-		if (ProxyDecision.PROXY.equals(tempProxyDecision)) {
+		if (ProxyDecision.PROXY_PREFERRED.equals(tempProxyDecision)) {
 			tempProxySocket = getProxySocket(tempHeaders);
 			if (tempProxySocket == null) {
 				// Try a direct connection
@@ -92,24 +92,29 @@ public class EscapeProxyWorkerSocket extends Thread {
 					replyWithBadGateway("Proxy and Direct not responding");
 					return;
 				} else {
-					tempProxyDecision = ProxyDecision.DIRECT;
+					tempProxyDecision = ProxyDecision.DIRECT_PREFERRED;
 				}
 			} else {
-				tempProxyDecision = ProxyDecision.PROXY;
+				tempProxyDecision = ProxyDecision.PROXY_PREFERRED;
 			}
-		} else if (ProxyDecision.DIRECT.equals(tempProxyDecision) || tempProxyDecision == null) {
+		} else if (ProxyDecision.DIRECT_PREFERRED.equals(tempProxyDecision) || ProxyDecision.DIRECT_ALWAYS.equals(tempProxyDecision)
+				|| tempProxyDecision == null) {
 			tempDirectSocket = getDirectSocket(tempHeaders, tempUrl);
 			if (tempDirectSocket == null) {
+				if (ProxyDecision.DIRECT_ALWAYS.equals(tempProxyDecision)) {
+					replyWithBadGateway("Direct not responding");
+					return;
+				}
 				// try the proxy
 				tempProxySocket = getProxySocket(tempHeaders);
 				if (tempProxySocket == null) {
 					replyWithBadGateway("Direct and Proxy not responding");
 					return;
 				} else {
-					tempProxyDecision = ProxyDecision.PROXY;
+					tempProxyDecision = ProxyDecision.PROXY_PREFERRED;
 				}
 			} else {
-				tempProxyDecision = ProxyDecision.DIRECT;
+				tempProxyDecision = ProxyDecision.DIRECT_PREFERRED;
 			}
 		}
 		setProxyDecision(tempUrl, tempProxyDecision);
@@ -238,15 +243,15 @@ public class EscapeProxyWorkerSocket extends Thread {
 		String tempHost = aUrl.getHost();
 		if ("localhost".equals(tempHost)) {
 			LOGGER.info("localhost never goes via proxy: " + tempHost);
-			return ProxyDecision.DIRECT;
+			return ProxyDecision.DIRECT_ALWAYS;
 		}
 		if (tempHost.startsWith("127.")) {
 			LOGGER.info("localhost never goes via proxy: " + tempHost);
-			return ProxyDecision.DIRECT;
+			return ProxyDecision.DIRECT_ALWAYS;
 		}
 		if (tempHost.startsWith("::1")) {
 			LOGGER.info("localhost never goes via proxy: " + tempHost);
-			return ProxyDecision.DIRECT;
+			return ProxyDecision.DIRECT_ALWAYS;
 		}
 		return proxyDecisionCache.get(tempHost);
 	}

@@ -7,10 +7,14 @@ public enum ProxyDecision {
 	/**
 	 *
 	 */
-	DIRECT,
+	DIRECT_ALWAYS,
 	/**
 	 *
 	 */
-	PROXY
+	DIRECT_PREFERRED,
+	/**
+	 *
+	 */
+	PROXY_PREFERRED
 
 }
