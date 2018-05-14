@@ -30,239 +30,241 @@ import de.quaddy_services.proxy.logging.LoggerFactory;
  */
 public class EscapeProxyConfig implements Serializable {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(EscapeProxyConfig.class);
+    private static final long serialVersionUID = -2919717071053609165L;
 
-	private Properties properties;
+    private static final Logger LOGGER = LoggerFactory.getLogger(EscapeProxyConfig.class);
 
-	/**
-	 *
-	 */
-	public EscapeProxyConfig(Properties aProperties) {
-		properties = aProperties;
-	}
+    private final Properties properties;
 
-	/**
-	 * @see #proxyHost
-	 */
-	public String getProxyHost() {
-		return properties.getProperty("ProxyHost");
-	}
+    /**
+     *
+     */
+    public EscapeProxyConfig(Properties aProperties) {
+        properties = aProperties;
+    }
 
-	/**
-	 * @see #proxyHost
-	 */
-	public void setProxyHost(String aProxyHost) {
-		properties.setProperty("ProxyHost", aProxyHost);
-	}
+    /**
+     * @see #proxyHost
+     */
+    public String getProxyHost() {
+        return properties.getProperty("ProxyHost");
+    }
 
-	/**
-	 * @see #proxyUser
-	 */
-	public String getProxyUser() {
-		return properties.getProperty("ProxyUser");
-	}
+    /**
+     * @see #proxyHost
+     */
+    public void setProxyHost(String aProxyHost) {
+        properties.setProperty("ProxyHost", aProxyHost);
+    }
 
-	/**
-	 * @see #proxyUser
-	 */
-	public void setProxyUser(String aProxyUser) {
-		properties.setProperty("ProxyUser", aProxyUser);
-	}
+    /**
+     * @see #proxyUser
+     */
+    public String getProxyUser() {
+        return properties.getProperty("ProxyUser");
+    }
 
-	/**
-	 * @see #proxyPassword
-	 */
-	public String getProxyPassword() {
-		String tempProperty = properties.getProperty("ProxyPassword");
-		if (tempProperty == null) {
-			return null;
-		}
-		return decrypt(tempProperty);
-	}
+    /**
+     * @see #proxyUser
+     */
+    public void setProxyUser(String aProxyUser) {
+        properties.setProperty("ProxyUser", aProxyUser);
+    }
 
-	/**
-	 *
-	 */
-	private String decrypt(String aProperty) {
-		try {
-			byte[] tempEncoded = getKey();
-			SecretKey secret = new SecretKeySpec(tempEncoded, "AES");
-			Cipher cipher = Cipher.getInstance("AES");
-			cipher.init(Cipher.DECRYPT_MODE, secret);
+    /**
+     * @see #proxyPassword
+     */
+    public String getProxyPassword() {
+        final String tempProperty = properties.getProperty("ProxyPassword");
+        if (tempProperty == null) {
+            return null;
+        }
+        return decrypt(tempProperty);
+    }
 
-			byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(aProperty));
+    /**
+     *
+     */
+    private String decrypt(String aProperty) {
+        try {
+            final byte[] tempEncoded = getKey();
+            final SecretKey secret = new SecretKeySpec(tempEncoded, "AES");
+            final Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.DECRYPT_MODE, secret);
 
-			return new String(decryptedBytes);
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-			LOGGER.error("error", e);
-			return null;
-		}
-	}
+            final byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(aProperty));
 
-	/**
-	 * @see #proxyPassword
-	 */
-	public void setProxyPassword(String aProxyPassword) {
-		properties.setProperty("ProxyPassword", encrypt(aProxyPassword));
-	}
+            return new String(decryptedBytes);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+            LOGGER.error("error", e);
+            return null;
+        }
+    }
 
-	/**
-	 *
-	 */
-	private String encrypt(String aProxyPassword) {
-		try {
-			byte[] tempEncoded = getKey();
+    /**
+     * @see #proxyPassword
+     */
+    public void setProxyPassword(String aProxyPassword) {
+        properties.setProperty("ProxyPassword", encrypt(aProxyPassword));
+    }
 
-			SecretKey secret = new SecretKeySpec(tempEncoded, "AES");
-			Cipher cipher = Cipher.getInstance("AES");
-			cipher.init(Cipher.ENCRYPT_MODE, secret);
+    /**
+     *
+     */
+    private String encrypt(String aProxyPassword) {
+        try {
+            final byte[] tempEncoded = getKey();
 
-			byte[] encryptedBytes = cipher.doFinal(aProxyPassword.getBytes());
+            final SecretKey secret = new SecretKeySpec(tempEncoded, "AES");
+            final Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.ENCRYPT_MODE, secret);
 
-			return Base64.getEncoder().encodeToString(encryptedBytes);
+            final byte[] encryptedBytes = cipher.doFinal(aProxyPassword.getBytes());
 
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-			LOGGER.error("error", e);
-			return null;
-		}
-	}
+            return Base64.getEncoder().encodeToString(encryptedBytes);
 
-	/**
-	 *
-	 */
-	private byte[] getKey() throws NoSuchAlgorithmException {
-		String tempKeyString = properties.getProperty("key");
-		if (tempKeyString != null) {
-			return Base64.getDecoder().decode(tempKeyString);
-		}
-		LOGGER.info("Create key...");
-		KeyGenerator kgen = KeyGenerator.getInstance("AES");
-		kgen.init(128); // 192 and 256 bits may not be available
-		SecretKey tempKey = kgen.generateKey();
-		byte[] tempEncoded = tempKey.getEncoded();
-		properties.setProperty("key", Base64.getEncoder().encodeToString(tempEncoded));
-		return tempEncoded;
-	}
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+            LOGGER.error("error", e);
+            return null;
+        }
+    }
 
-	public String getLocalPort() {
-		String tempLocalPort = properties.getProperty("localPort");
-		if (tempLocalPort == null) {
-			return "0";
-		}
-		try {
-			return Integer.valueOf(tempLocalPort).toString();
-		} catch (NumberFormatException e) {
-			LOGGER.debug("Ignore ", e);
-			return "0";
-		}
-	}
+    /**
+     *
+     */
+    private byte[] getKey() throws NoSuchAlgorithmException {
+        final String tempKeyString = properties.getProperty("key");
+        if (tempKeyString != null) {
+            return Base64.getDecoder().decode(tempKeyString);
+        }
+        LOGGER.info("Create key...");
+        final KeyGenerator kgen = KeyGenerator.getInstance("AES");
+        kgen.init(128); // 192 and 256 bits may not be available
+        final SecretKey tempKey = kgen.generateKey();
+        final byte[] tempEncoded = tempKey.getEncoded();
+        properties.setProperty("key", Base64.getEncoder().encodeToString(tempEncoded));
+        return tempEncoded;
+    }
 
-	public void setLocalPort(String aPort) {
-		if (aPort == null) {
-			properties.setProperty("localPort", null);
-		} else {
-			try {
-				properties.setProperty("localPort", Integer.valueOf(aPort).toString());
-			} catch (NumberFormatException e) {
-				LOGGER.debug("Ignore ", e);
-			}
-		}
+    public String getLocalPort() {
+        final String tempLocalPort = properties.getProperty("localPort");
+        if (tempLocalPort == null) {
+            return "0";
+        }
+        try {
+            return Integer.valueOf(tempLocalPort).toString();
+        } catch (final NumberFormatException e) {
+            LOGGER.debug("Ignore ", e);
+            return "0";
+        }
+    }
 
-	}
+    public void setLocalPort(String aPort) {
+        if (aPort == null) {
+            properties.setProperty("localPort", null);
+        } else {
+            try {
+                properties.setProperty("localPort", Integer.valueOf(aPort).toString());
+            } catch (final NumberFormatException e) {
+                LOGGER.debug("Ignore ", e);
+            }
+        }
 
-	private EventListenerList events = new EventListenerList();
+    }
 
-	private LinkedList<String> log = new LinkedList<String>();
+    private final EventListenerList events = new EventListenerList();
 
-	/**
-	 *
-	 */
-	public void fireCheckPortEvent() {
-		CheckPortListener[] tempListenerList = events.getListeners(CheckPortListener.class);
-		for (CheckPortListener tempListener : tempListenerList) {
-			tempListener.checkPort(Integer.valueOf(getLocalPort()));
-		}
-	}
+    private final LinkedList<String> log = new LinkedList<String>();
 
-	/**
-	 *
-	 */
-	public void addStatusListener(PortStatusListener aStatusListener) {
-		events.add(PortStatusListener.class, aStatusListener);
-	}
+    /**
+     *
+     */
+    public void fireCheckPortEvent() {
+        final CheckPortListener[] tempListenerList = events.getListeners(CheckPortListener.class);
+        for (final CheckPortListener tempListener : tempListenerList) {
+            tempListener.checkPort(Integer.valueOf(getLocalPort()));
+        }
+    }
 
-	/**
-	 *
-	 */
-	public void addCheckPortListener(CheckPortListener aCheckPortListener) {
-		events.add(CheckPortListener.class, aCheckPortListener);
-	}
+    /**
+     *
+     */
+    public void addStatusListener(PortStatusListener aStatusListener) {
+        events.add(PortStatusListener.class, aStatusListener);
+    }
 
-	/**
-	 *
-	 */
-	public void firePortStatus(boolean anOkFlag, String aStatus) {
-		PortStatusListener[] tempListenerList = events.getListeners(PortStatusListener.class);
-		for (PortStatusListener tempListener : tempListenerList) {
-			tempListener.statusChanged(anOkFlag, aStatus);
-		}
-		fireLogEvent(aStatus);
-	}
+    /**
+     *
+     */
+    public void addCheckPortListener(CheckPortListener aCheckPortListener) {
+        events.add(CheckPortListener.class, aCheckPortListener);
+    }
 
-	/**
-	 *
-	 */
-	public String getProxyPort() {
-		String tempPort = properties.getProperty("ProxyPort");
-		if (tempPort == null) {
-			return "0";
-		}
-		try {
-			return Integer.valueOf(tempPort).toString();
-		} catch (NumberFormatException e) {
-			LOGGER.debug("Ignore ", e);
-			return "0";
-		}
+    /**
+     *
+     */
+    public void firePortStatus(boolean anOkFlag, String aStatus) {
+        final PortStatusListener[] tempListenerList = events.getListeners(PortStatusListener.class);
+        for (final PortStatusListener tempListener : tempListenerList) {
+            tempListener.statusChanged(anOkFlag, aStatus);
+        }
+        fireLogEvent(aStatus);
+    }
 
-	}
+    /**
+     *
+     */
+    public String getProxyPort() {
+        final String tempPort = properties.getProperty("ProxyPort");
+        if (tempPort == null) {
+            return "0";
+        }
+        try {
+            return Integer.valueOf(tempPort).toString();
+        } catch (final NumberFormatException e) {
+            LOGGER.debug("Ignore ", e);
+            return "0";
+        }
 
-	public void setProxyPort(String aPort) {
-		if (aPort == null) {
-			properties.setProperty("ProxyPort", null);
-		} else {
-			try {
-				properties.setProperty("ProxyPort", Integer.valueOf(aPort).toString());
-			} catch (NumberFormatException e) {
-				LOGGER.debug("Ignore ", e);
-			}
-		}
-	}
+    }
 
-	/**
-	 *
-	 */
-	public void fireLogEvent(String aMsg) {
-		LOGGER.info(aMsg);
-		LocalTime tempTime = LocalTime.now();
-		// #1 Take a copy to avoid Nullpointers when iterating
-		List<String> tempCopyOfLog;
-		synchronized (log) {
-			log.add(tempTime + ":" + aMsg);
-			if (log.size() > 20) {
-				log.removeFirst();
-			}
-			tempCopyOfLog = new ArrayList<>(log);
-		}
-		LogEventListener[] tempListenerList = events.getListeners(LogEventListener.class);
-		for (LogEventListener tempListener : tempListenerList) {
-			tempListener.updatedLog(tempCopyOfLog);
-		}
-	}
+    public void setProxyPort(String aPort) {
+        if (aPort == null) {
+            properties.setProperty("ProxyPort", null);
+        } else {
+            try {
+                properties.setProperty("ProxyPort", Integer.valueOf(aPort).toString());
+            } catch (final NumberFormatException e) {
+                LOGGER.debug("Ignore ", e);
+            }
+        }
+    }
 
-	/**
-	 *
-	 */
-	public void addLogEventListener(LogEventListener aLogEventListener) {
-		events.add(LogEventListener.class, aLogEventListener);
-	}
+    /**
+     *
+     */
+    public void fireLogEvent(String aMsg) {
+        LOGGER.info(aMsg);
+        final LocalTime tempTime = LocalTime.now();
+        // #1 Take a copy to avoid Nullpointers when iterating
+        List<String> tempCopyOfLog;
+        synchronized (log) {
+            log.add(tempTime + ":" + aMsg);
+            if (log.size() > 20) {
+                log.removeFirst();
+            }
+            tempCopyOfLog = new ArrayList<>(log);
+        }
+        final LogEventListener[] tempListenerList = events.getListeners(LogEventListener.class);
+        for (final LogEventListener tempListener : tempListenerList) {
+            tempListener.updatedLog(tempCopyOfLog);
+        }
+    }
+
+    /**
+     *
+     */
+    public void addLogEventListener(LogEventListener aLogEventListener) {
+        events.add(LogEventListener.class, aLogEventListener);
+    }
 }
