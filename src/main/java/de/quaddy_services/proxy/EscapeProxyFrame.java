@@ -13,8 +13,11 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import javax.swing.Action;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -28,208 +31,226 @@ import de.quaddy_services.proxy.events.PortStatusListener;
  *
  */
 public class EscapeProxyFrame extends JFrame {
-	/**
-	 *
-	 */
-	private static final JTextArea LOG_FIELD = new JTextArea("");
+    /**
+     *
+     */
+    private static final JTextArea LOG_FIELD = new JTextArea("");
 
-	/**
-	 *
-	 */
-	private static final JPasswordField PROXY_PASSWORD = new JPasswordField();
+    /**
+     *
+     */
+    private static final JPasswordField PROXY_PASSWORD = new JPasswordField();
 
-	/**
-	 *
-	 */
-	private static final JTextField PROXY_HOST = new JTextField();
+    /**
+     *
+     */
+    private static final JTextField PROXY_HOST = new JTextField();
 
-	/**
-	 *
-	 */
-	private static final JTextField PROXY_USER = new JTextField();
+    /**
+     *
+     */
+    private static final JTextField PROXY_USER = new JTextField();
 
-	/**
-	 *
-	 */
-	private static final long serialVersionUID = 1L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-	private static final JTextField LOCAL_PORT = new JTextField();
+    private static final JTextField LOCAL_PORT = new JTextField();
 
-	private static final JLabel LOCAL_PORT_STATUS = new JLabel();
+    private static final JLabel LOCAL_PORT_STATUS = new JLabel();
 
-	private static final JTextField PROXY_PORT = new JTextField();
+    private static final JTextField PROXY_PORT = new JTextField();
 
-	private EscapeProxyConfig config;
+    private final EscapeProxyConfig config;
 
-	/**
-	 * @param aEscapeProxyConfig
-	 * @param aName
-	 *
-	 */
-	public EscapeProxyFrame(EscapeProxyConfig aEscapeProxyConfig, String aName) {
-		super(aName);
-		config = aEscapeProxyConfig;
+    private Action shutDownAndExitAction;
 
-		config.addStatusListener(createStatusListener());
+    /**
+     * @param aEscapeProxyConfig
+     * @param aName
+     */
+    public EscapeProxyFrame(EscapeProxyConfig aEscapeProxyConfig, String aName) {
+        super(aName);
+        config = aEscapeProxyConfig;
 
-		config.addLogEventListener(createLogEventListener());
+        config.addStatusListener(createStatusListener());
 
-		initGui();
-	}
+        config.addLogEventListener(createLogEventListener());
 
-	/**
-	 *
-	 */
-	private LogEventListener createLogEventListener() {
-		return new LogEventListener() {
-			/**
-			 *
-			 */
-			@Override
-			public void updatedLog(List<String> aLog) {
-				StringBuilder tempString = new StringBuilder();
-				for (String tempLine : aLog) {
-					tempString.append(tempLine);
-					tempString.append("\n");
-				}
-				EventQueue.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						LOG_FIELD.setText(tempString.toString());
-					}
-				});
-			}
-		};
-	}
+        initGui();
+    }
 
-	/**
-	 *
-	 */
-	private PortStatusListener createStatusListener() {
-		return new PortStatusListener() {
-			@Override
-			public void statusChanged(boolean aOkFlag, String aText) {
-				EventQueue.invokeLater(new Runnable() {
+    /**
+     *
+     */
+    private LogEventListener createLogEventListener() {
+        return new LogEventListener() {
+            /**
+             *
+             */
+            @Override
+            public void updatedLog(List<String> aLog) {
+                final StringBuilder tempString = new StringBuilder();
+                for (final String tempLine : aLog) {
+                    tempString.append(tempLine);
+                    tempString.append("\n");
+                }
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        LOG_FIELD.setText(tempString.toString());
+                    }
+                });
+            }
+        };
+    }
 
-					@Override
-					public void run() {
-						LOCAL_PORT_STATUS.setText(aText);
-						if (aOkFlag) {
-							LOCAL_PORT_STATUS.setBackground(Color.GREEN.brighter());
-						} else {
-							LOCAL_PORT_STATUS.setBackground(Color.RED.brighter());
-						}
-					}
-				});
-			}
-		};
-	}
+    /**
+     *
+     */
+    private PortStatusListener createStatusListener() {
+        return new PortStatusListener() {
+            @Override
+            public void statusChanged(boolean aOkFlag, String aText) {
+                EventQueue.invokeLater(new Runnable() {
 
-	/**
-	 *
-	 */
-	private void initGui() {
-		GridBagConstraints tempGbc1 = new GridBagConstraints();
-		tempGbc1.gridx = 0;
-		tempGbc1.gridy = 0;
-		tempGbc1.weightx = 1;
-		tempGbc1.fill = GridBagConstraints.HORIZONTAL;
-		tempGbc1.anchor = GridBagConstraints.EAST;
+                    @Override
+                    public void run() {
+                        LOCAL_PORT_STATUS.setText(aText);
+                        if (aOkFlag) {
+                            LOCAL_PORT_STATUS.setBackground(Color.GREEN.brighter());
+                        } else {
+                            LOCAL_PORT_STATUS.setBackground(Color.RED.brighter());
+                        }
+                    }
+                });
+            }
+        };
+    }
 
-		GridBagConstraints tempGbc2 = new GridBagConstraints();
-		tempGbc2.gridx = 1;
-		tempGbc2.gridy = 0;
-		tempGbc2.weightx = 2;
-		tempGbc2.fill = GridBagConstraints.HORIZONTAL;
-		tempGbc2.anchor = GridBagConstraints.WEST;
+    /**
+     *
+     */
+    private void initGui() {
+        final GridBagConstraints tempGbc1 = new GridBagConstraints();
+        tempGbc1.gridx = 0;
+        tempGbc1.gridy = 0;
+        tempGbc1.weightx = 1;
+        tempGbc1.fill = GridBagConstraints.HORIZONTAL;
+        tempGbc1.anchor = GridBagConstraints.EAST;
 
-		setLayout(new GridBagLayout());
+        final GridBagConstraints tempGbc2 = new GridBagConstraints();
+        tempGbc2.gridx = 1;
+        tempGbc2.gridy = 0;
+        tempGbc2.weightx = 2;
+        tempGbc2.fill = GridBagConstraints.HORIZONTAL;
+        tempGbc2.anchor = GridBagConstraints.WEST;
 
-		add(createLabel("Listen on localhost:"), tempGbc1);
-		add(LOCAL_PORT, tempGbc2);
-		addSetterGetter(LOCAL_PORT, config::setLocalPort, config::getLocalPort);
-		LOCAL_PORT.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusLost(@SuppressWarnings("unused") FocusEvent aE) {
-				config.fireCheckPortEvent();
-			}
-		});
+        setLayout(new GridBagLayout());
 
-		tempGbc1.gridy++;
-		tempGbc2.gridy++;
+        add(createLabel("Listen on localhost:"), tempGbc1);
+        add(LOCAL_PORT, tempGbc2);
+        addSetterGetter(LOCAL_PORT, config::setLocalPort, config::getLocalPort);
+        LOCAL_PORT.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(@SuppressWarnings("unused") FocusEvent aE) {
+                config.fireCheckPortEvent();
+            }
+        });
 
-		tempGbc1.gridwidth = 3;
-		add(LOCAL_PORT_STATUS, tempGbc1);
-		LOCAL_PORT_STATUS.setOpaque(true);
-		tempGbc1.gridwidth = 1;
+        tempGbc1.gridy++;
+        tempGbc2.gridy++;
 
-		tempGbc1.gridy++;
-		tempGbc2.gridy++;
+        tempGbc1.gridwidth = 3;
+        add(LOCAL_PORT_STATUS, tempGbc1);
+        LOCAL_PORT_STATUS.setOpaque(true);
+        tempGbc1.gridwidth = 1;
 
-		add(createLabel("ProxyHost:"), tempGbc1);
-		add(PROXY_HOST, tempGbc2);
-		addSetterGetter(PROXY_HOST, config::setProxyHost, config::getProxyHost);
+        tempGbc1.gridy++;
+        tempGbc2.gridy++;
 
-		tempGbc1.gridy++;
-		tempGbc2.gridy++;
+        add(createLabel("ProxyHost:"), tempGbc1);
+        add(PROXY_HOST, tempGbc2);
+        addSetterGetter(PROXY_HOST, config::setProxyHost, config::getProxyHost);
 
-		add(createLabel("ProxyPort:"), tempGbc1);
-		add(PROXY_PORT, tempGbc2);
-		addSetterGetter(PROXY_PORT, config::setProxyPort, config::getProxyPort);
+        tempGbc1.gridy++;
+        tempGbc2.gridy++;
 
-		tempGbc1.gridy++;
-		tempGbc2.gridy++;
+        add(createLabel("ProxyPort:"), tempGbc1);
+        add(PROXY_PORT, tempGbc2);
+        addSetterGetter(PROXY_PORT, config::setProxyPort, config::getProxyPort);
 
-		add(createLabel("ProxyUser:"), tempGbc1);
-		add(PROXY_USER, tempGbc2);
-		addSetterGetter(PROXY_USER, config::setProxyUser, config::getProxyUser);
+        tempGbc1.gridy++;
+        tempGbc2.gridy++;
 
-		tempGbc1.gridy++;
-		tempGbc2.gridy++;
+        add(createLabel("ProxyUser:"), tempGbc1);
+        add(PROXY_USER, tempGbc2);
+        addSetterGetter(PROXY_USER, config::setProxyUser, config::getProxyUser);
 
-		add(createLabel("ProxyPassword:"), tempGbc1);
-		add(PROXY_PASSWORD, tempGbc2);
-		addSetterGetter(PROXY_PASSWORD, config::setProxyPassword, config::getProxyPassword);
+        tempGbc1.gridy++;
+        tempGbc2.gridy++;
 
-		tempGbc1.gridy++;
-		tempGbc2.gridy++;
+        add(createLabel("ProxyPassword:"), tempGbc1);
+        add(PROXY_PASSWORD, tempGbc2);
+        addSetterGetter(PROXY_PASSWORD, config::setProxyPassword, config::getProxyPassword);
 
-		tempGbc1.gridwidth = 3;
-		tempGbc1.weighty = 1;
-		tempGbc1.fill = GridBagConstraints.BOTH;
-		add(new JScrollPane(LOG_FIELD), tempGbc1);
-	}
+        tempGbc1.gridy++;
+        tempGbc2.gridy++;
 
-	/**
-	 *
-	 */
-	private void addSetterGetter(JTextField aTextField, Consumer<String> aSetter, Supplier<String> aGetter) {
-		aTextField.setText(aGetter.get());
-		aTextField.addKeyListener(new KeyListener() {
+        tempGbc1.gridwidth = 3;
+        tempGbc1.weighty = 1;
+        tempGbc1.fill = GridBagConstraints.BOTH;
+        add(new JScrollPane(LOG_FIELD), tempGbc1);
+    }
 
-			@Override
-			public void keyTyped(@SuppressWarnings("unused") KeyEvent aE) {
-				aSetter.accept(aTextField.getText());
-			}
+    protected void setShutdownAndExitAction(Action action) {
+        shutDownAndExitAction = action;
+        if (action == null) {
+            this.setJMenuBar(null);
+        } else {
+            final JMenuBar menuBar = new JMenuBar();
+            final JMenu menuFile = new JMenu("Proxy");
+            menuFile.add(action);
+            menuBar.add(menuFile);
+            this.setJMenuBar(menuBar);
+        }
+    }
 
-			@Override
-			public void keyReleased(@SuppressWarnings("unused") KeyEvent aE) {
-				aSetter.accept(aTextField.getText());
-			}
+    protected Action getShutdownAndExitAction() {
+        return shutDownAndExitAction;
+    }
 
-			@Override
-			public void keyPressed(@SuppressWarnings("unused") KeyEvent aE) {
-				aSetter.accept(aTextField.getText());
-			}
-		});
-	}
+    /**
+     *
+     */
+    private void addSetterGetter(JTextField aTextField, Consumer<String> aSetter, Supplier<String> aGetter) {
+        aTextField.setText(aGetter.get());
+        aTextField.addKeyListener(new KeyListener() {
 
-	/**
-	 *
-	 */
-	private Component createLabel(String aString) {
-		JLabel tempJLabel = new JLabel(aString);
-		tempJLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-		return tempJLabel;
-	}
+            @Override
+            public void keyTyped(@SuppressWarnings("unused") KeyEvent aE) {
+                aSetter.accept(aTextField.getText());
+            }
+
+            @Override
+            public void keyReleased(@SuppressWarnings("unused") KeyEvent aE) {
+                aSetter.accept(aTextField.getText());
+            }
+
+            @Override
+            public void keyPressed(@SuppressWarnings("unused") KeyEvent aE) {
+                aSetter.accept(aTextField.getText());
+            }
+        });
+    }
+
+    /**
+     *
+     */
+    private Component createLabel(String aString) {
+        final JLabel tempJLabel = new JLabel(aString);
+        tempJLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        return tempJLabel;
+    }
 }
