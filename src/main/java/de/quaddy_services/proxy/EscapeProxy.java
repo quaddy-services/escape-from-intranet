@@ -44,9 +44,25 @@ public class EscapeProxy {
 	private static EscapeProxyFrame escapeProxyFrame;
 	private static Properties properties;
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
 		initializeLogger();
 
+		EventQueue.invokeLater(() -> {
+			try {
+				mainInEventQueue();
+			} catch (IOException e) {
+				LOGGER.error("Error initializing", e);
+				System.exit(5);
+			}
+		});
+
+	}
+
+	/**
+	 * @throws IOException
+	*
+	*/
+	private static void mainInEventQueue() throws IOException {
 		LOGGER.info("Start");
 		properties = readConfig();
 
@@ -91,8 +107,8 @@ public class EscapeProxy {
 	}
 
 	/**
-	 *
-	 */
+		 *
+		 */
 	protected static void clearProxyDecision() {
 		EscapeProxyWorkerSocket.clearProxyDecisionCache();
 	}
