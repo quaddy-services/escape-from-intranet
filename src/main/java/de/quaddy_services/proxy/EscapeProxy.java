@@ -37,333 +37,349 @@ import de.quaddy_services.proxy.logging.LoggerFactory;
  */
 public class EscapeProxy {
 
-    private static Logger LOGGER;
+	private static Logger LOGGER;
 
-    private static boolean applicationIsExiting = false;
+	private static boolean applicationIsExiting = false;
 
-    private static EscapeProxyFrame tempEscapeProxyFrame;
-    private static Properties tempProperties;
+	private static EscapeProxyFrame tempEscapeProxyFrame;
+	private static Properties tempProperties;
 
-    public static void main(String[] args) throws IOException {
-        initializeLogger();
+	public static void main(String[] args) throws IOException {
+		initializeLogger();
 
-        LOGGER.info("Start");
-        tempProperties = readConfig();
+		LOGGER.info("Start");
+		tempProperties = readConfig();
 
-        final EscapeProxyConfig tempEscapeProxyConfig = new EscapeProxyConfig(tempProperties);
+		final EscapeProxyConfig tempEscapeProxyConfig = new EscapeProxyConfig(tempProperties);
 
-        tempEscapeProxyFrame = new EscapeProxyFrame(tempEscapeProxyConfig, getFrameTitle());
+		tempEscapeProxyFrame = new EscapeProxyFrame(tempEscapeProxyConfig, getFrameTitle());
 
-        tempEscapeProxyFrame.setSize(new Dimension(500, 400));
-        tempEscapeProxyFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        tempEscapeProxyFrame.setShutdownAndExitAction(new AbstractAction("Shutdown and Exit") {
+		tempEscapeProxyFrame.setSize(new Dimension(500, 400));
+		tempEscapeProxyFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		tempEscapeProxyFrame.setShutdownAndExitAction(new AbstractAction("Shutdown and Exit") {
 
-            private static final long serialVersionUID = 8818325653972860075L;
+			private static final long serialVersionUID = 8818325653972860075L;
 
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                shutdownAndExit();
-            }
-        });
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				shutdownAndExit();
+			}
+		});
+		tempEscapeProxyFrame.setClearProxyDecisionAction(new AbstractAction("Clear Proxy Decision") {
 
-        Thread.setDefaultUncaughtExceptionHandler(new LoggingUncaughtExceptionHandler());
-        // See java.awt.EventDispatchThread.handlerPropName
-        System.setProperty("sun.awt.exception.handler", LoggingUncaughtExceptionHandler.class.getName());
+			private static final long serialVersionUID = 1L;
 
-        trayImage = new Image[] {getImage("offline.png"), getImage("online.png")};
+			@Override
+			public void actionPerformed(@SuppressWarnings("unused") ActionEvent event) {
+				clearProxyDecision();
+			}
+		});
 
-        initWindowListener();
-        initSystemTray(tempEscapeProxyConfig);
+		Thread.setDefaultUncaughtExceptionHandler(new LoggingUncaughtExceptionHandler());
+		// See java.awt.EventDispatchThread.handlerPropName
+		System.setProperty("sun.awt.exception.handler", LoggingUncaughtExceptionHandler.class.getName());
 
-        setVisible(tempEscapeProxyConfig);
-        addStatusListener(tempEscapeProxyConfig);
+		trayImage = new Image[] { getImage("offline.png"), getImage("online.png") };
 
-        new EscapeProxyWorkerAccept(tempEscapeProxyConfig).start();
-    }
+		initWindowListener();
+		initSystemTray(tempEscapeProxyConfig);
 
-    /**
-     *
-     */
-    private static String getFrameTitle() {
-        final Properties tempProperties = new Properties();
-        final InputStream tempIn = EscapeProxy.class.getResourceAsStream("/META-INF/maven/de.quaddy_services/escape-from-intranet/pom.properties");
-        if (tempIn != null) {
-            try {
-                tempProperties.load(tempIn);
-                tempIn.close();
-            } catch (final IOException e) {
-                LOGGER.error("Ignore readingerror pom.properties", e);
-            }
-        }
-        final String tempVersion = tempProperties.getProperty("version", "?");
-        return "Escape from intranet proxy " + tempVersion;
-    }
+		setVisible(tempEscapeProxyConfig);
+		addStatusListener(tempEscapeProxyConfig);
 
-    /**
-     *
-     */
-    private static void addStatusListener(EscapeProxyConfig aEscapeProxyConfig) {
+		new EscapeProxyWorkerAccept(tempEscapeProxyConfig).start();
+	}
 
-        aEscapeProxyConfig.addStatusListener(new PortStatusListener() {
+	/**
+	 *
+	 */
+	protected static void clearProxyDecision() {
+		EscapeProxyWorkerSocket.clearProxyDecisionCache();
+	}
 
-            @Override
-            public void statusChanged(boolean aOkFlag, @SuppressWarnings("unused") String aText) {
-                EventQueue.invokeLater(new Runnable() {
+	/**
+	 *
+	 */
+	private static String getFrameTitle() {
+		final Properties tempProperties = new Properties();
+		final InputStream tempIn = EscapeProxy.class.getResourceAsStream("/META-INF/maven/de.quaddy_services/escape-from-intranet/pom.properties");
+		if (tempIn != null) {
+			try {
+				tempProperties.load(tempIn);
+				tempIn.close();
+			} catch (final IOException e) {
+				LOGGER.error("Ignore readingerror pom.properties", e);
+			}
+		}
+		final String tempVersion = tempProperties.getProperty("version", "?");
+		return "Escape from intranet proxy " + tempVersion;
+	}
 
-                    @Override
-                    public void run() {
-                        tempEscapeProxyFrame.setIconImage(trayImage[aOkFlag ? 1 : 0]);
-                    }
-                });
-            }
-        });
-    }
+	/**
+	 *
+	 */
+	private static void addStatusListener(EscapeProxyConfig aEscapeProxyConfig) {
 
-    /**
-     * Before loading logback.xml, set the properties
-     */
-    private static void initializeLogger() {
-        final String tempDefaultLevel = System.getProperty("defaultLogLevel");
-        if (tempDefaultLevel == null) {
-            System.setProperty("defaultLogLevel", "info");
-        }
-        LOGGER = LoggerFactory.getLogger(EscapeProxy.class);
-    }
+		aEscapeProxyConfig.addStatusListener(new PortStatusListener() {
 
-    /**
-     * @return
-     */
-    private static synchronized Properties readConfig() {
-        final Properties tempProperties = new Properties();
-        final File tempFile = getFile();
-        if (tempFile.exists()) {
-            try {
-                final FileInputStream tempIn = new FileInputStream(tempFile);
-                tempProperties.loadFromXML(tempIn);
-                tempIn.close();
-                LOGGER.info("Loaded config " + tempFile.getAbsolutePath());
-                LOGGER.debug("Content={}", tempProperties);
-                previouslySavedProperties = new Properties();
-                previouslySavedProperties.putAll(tempProperties);
-            } catch (final IOException e) {
-                LOGGER.error("error", e);
-            }
-        }
-        return tempProperties;
-    }
+			@Override
+			public void statusChanged(boolean aOkFlag, @SuppressWarnings("unused") String aText) {
+				EventQueue.invokeLater(new Runnable() {
 
-    /**
-     *
-     */
-    private static File getFile() {
-        final File tempFile = new File(System.getProperty("user.home") + "/" + "escape-from-intranet.xml");
-        return tempFile;
-    }
+					@Override
+					public void run() {
+						tempEscapeProxyFrame.setIconImage(trayImage[aOkFlag ? 1 : 0]);
+					}
+				});
+			}
+		});
+	}
 
-    private static Image[] trayImage;
+	/**
+	 * Before loading logback.xml, set the properties
+	 */
+	private static void initializeLogger() {
+		final String tempDefaultLevel = System.getProperty("defaultLogLevel");
+		if (tempDefaultLevel == null) {
+			System.setProperty("defaultLogLevel", "info");
+		}
+		LOGGER = LoggerFactory.getLogger(EscapeProxy.class);
+	}
 
-    private static Properties previouslySavedProperties;
+	/**
+	 * @return
+	 */
+	private static synchronized Properties readConfig() {
+		final Properties tempProperties = new Properties();
+		final File tempFile = getFile();
+		if (tempFile.exists()) {
+			try {
+				final FileInputStream tempIn = new FileInputStream(tempFile);
+				tempProperties.loadFromXML(tempIn);
+				tempIn.close();
+				LOGGER.info("Loaded config " + tempFile.getAbsolutePath());
+				LOGGER.debug("Content={}", tempProperties);
+				previouslySavedProperties = new Properties();
+				previouslySavedProperties.putAll(tempProperties);
+			} catch (final IOException e) {
+				LOGGER.error("error", e);
+			}
+		}
+		return tempProperties;
+	}
 
-    /**
-     * @param aEscapeProxyConfig
-     */
-    private static void initSystemTray(EscapeProxyConfig aEscapeProxyConfig) {
-        if (SystemTray.isSupported()) {
-            EventQueue.invokeLater(new Runnable() {
-                /**
-                 * Init gui in eventqueue
-                 */
-                @Override
-                public void run() {
-                    try {
-                        final SystemTray tempSystemTray = SystemTray.getSystemTray();
-                        final TrayIcon tempTrayIcon = new TrayIcon(trayImage[0]);
-                        tempTrayIcon.addMouseListener(new MouseAdapter() {
-                            @Override
-                            public void mouseClicked(@SuppressWarnings("unused") MouseEvent aE) {
-                                tempEscapeProxyFrame.setVisible(true);
-                                tempEscapeProxyFrame.toFront();
-                                tempEscapeProxyFrame.setState(Frame.NORMAL);
-                            }
-                        });
-                        tempSystemTray.add(tempTrayIcon);
-                    } catch (final AWTException e) {
-                        LOGGER.error("Error", e);
-                    }
-                }
-            });
-            aEscapeProxyConfig.addStatusListener(new PortStatusListener() {
-                private Boolean currentStatus = null;
+	/**
+	 *
+	 */
+	private static File getFile() {
+		final File tempFile = new File(System.getProperty("user.home") + "/" + "escape-from-intranet.xml");
+		return tempFile;
+	}
 
-                @Override
-                public void statusChanged(boolean aOkFlag, String aText) {
-                    if (SystemTray.isSupported()) {
-                        EventQueue.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                final TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
-                                tempTrayIcon.setImageAutoSize(true);
-                                tempTrayIcon.setImage(trayImage[aOkFlag ? 1 : 0]);
-                                tempTrayIcon.setToolTip(aText);
-                            }
-                        });
-                        if (currentStatus == null || currentStatus ^ aOkFlag) {
-                            // show first status or changes
-                            EventQueue.invokeLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    final TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
-                                    tempTrayIcon.displayMessage("Status change", aText, MessageType.INFO);
-                                }
-                            });
-                        }
-                        currentStatus = aOkFlag;
-                    }
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            tempEscapeProxyFrame.setIconImage(trayImage[aOkFlag ? 1 : 0]);
-                        }
-                    });
-                }
-            });
-        }
-    }
+	private static Image[] trayImage;
 
-    /**
-     * @throws IOException
-     */
-    private static Image getImage(String aString) throws IOException {
-        final InputStream tempIn = EscapeProxy.class.getClassLoader().getResourceAsStream(aString);
-        final BufferedImage tempImage = ImageIO.read(tempIn);
-        return tempImage;
-    }
+	private static Properties previouslySavedProperties;
 
-    /**
-     * @param aEscapeProxyConfig
-     */
-    private static void setVisible(EscapeProxyConfig aEscapeProxyConfig) {
-        EventQueue.invokeLater(new Runnable() {
-            /**
-             *
-             */
-            @Override
-            public void run() {
-                tempEscapeProxyFrame.setIconImage(trayImage[0]);
-                tempEscapeProxyFrame.setVisible(true);
-                final String tempProxyUser = aEscapeProxyConfig.getProxyUser();
-                if (tempProxyUser != null && tempProxyUser.length() > 0) {
-                    tempEscapeProxyFrame.setState(Frame.ICONIFIED);
-                }
-            }
-        });
-    }
+	/**
+	 * @param aEscapeProxyConfig
+	 */
+	private static void initSystemTray(EscapeProxyConfig aEscapeProxyConfig) {
+		if (SystemTray.isSupported()) {
+			EventQueue.invokeLater(new Runnable() {
+				/**
+				 * Init gui in eventqueue
+				 */
+				@Override
+				public void run() {
+					try {
+						final SystemTray tempSystemTray = SystemTray.getSystemTray();
+						final TrayIcon tempTrayIcon = new TrayIcon(trayImage[0]);
+						tempTrayIcon.addMouseListener(new MouseAdapter() {
+							@Override
+							public void mouseClicked(@SuppressWarnings("unused") MouseEvent aE) {
+								tempEscapeProxyFrame.setVisible(true);
+								tempEscapeProxyFrame.toFront();
+								tempEscapeProxyFrame.setState(Frame.NORMAL);
+							}
+						});
+						tempSystemTray.add(tempTrayIcon);
+					} catch (final AWTException e) {
+						LOGGER.error("Error", e);
+					}
+				}
+			});
+			aEscapeProxyConfig.addStatusListener(new PortStatusListener() {
+				private Boolean currentStatus = null;
 
-    private static void shutdownAndExit() {
-        tempEscapeProxyFrame.setVisible(false);
-        saveConfig();
-        LOGGER.info("Window Closing");
-        final Timer tempTimer = new Timer(5000, new ActionListener() {
+				@Override
+				public void statusChanged(boolean aOkFlag, String aText) {
+					if (SystemTray.isSupported()) {
+						EventQueue.invokeLater(new Runnable() {
+							@Override
+							public void run() {
+								final TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
+								tempTrayIcon.setImageAutoSize(true);
+								tempTrayIcon.setImage(trayImage[aOkFlag ? 1 : 0]);
+								tempTrayIcon.setToolTip(aText);
+							}
+						});
+						if (currentStatus == null || currentStatus ^ aOkFlag) {
+							// show first status or changes
+							EventQueue.invokeLater(new Runnable() {
+								@Override
+								public void run() {
+									final TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
+									tempTrayIcon.displayMessage("Status change", aText, MessageType.INFO);
+								}
+							});
+						}
+						currentStatus = aOkFlag;
+					}
+					EventQueue.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							tempEscapeProxyFrame.setIconImage(trayImage[aOkFlag ? 1 : 0]);
+						}
+					});
+				}
+			});
+		}
+	}
 
-            @Override
-            public void actionPerformed(@SuppressWarnings("unused") ActionEvent aE2) {
-                LOGGER.info("Exit");
-                setApplicationIsExiting(true);
-                System.exit(0);
-            }
-        });
-        tempTimer.start();
-        if (SystemTray.isSupported()) {
-            final TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
-            tempTrayIcon.displayMessage("Shutdown", "localhost proxy\nis shutting down...", MessageType.WARNING);
-        }
-    }
+	/**
+	 * @throws IOException
+	 */
+	private static Image getImage(String aString) throws IOException {
+		final InputStream tempIn = EscapeProxy.class.getClassLoader().getResourceAsStream(aString);
+		final BufferedImage tempImage = ImageIO.read(tempIn);
+		return tempImage;
+	}
 
-    /**
-     * @param aProperties
-     */
-    private static void initWindowListener() {
-        tempEscapeProxyFrame.addWindowListener(new WindowAdapter() {
+	/**
+	 * @param aEscapeProxyConfig
+	 */
+	private static void setVisible(EscapeProxyConfig aEscapeProxyConfig) {
+		EventQueue.invokeLater(new Runnable() {
+			/**
+			 *
+			 */
+			@Override
+			public void run() {
+				tempEscapeProxyFrame.setIconImage(trayImage[0]);
+				tempEscapeProxyFrame.setVisible(true);
+				final String tempProxyUser = aEscapeProxyConfig.getProxyUser();
+				if (tempProxyUser != null && tempProxyUser.length() > 0) {
+					tempEscapeProxyFrame.setState(Frame.ICONIFIED);
+				}
+			}
+		});
+	}
 
-            /**
-             * shutdown and exit if no other action is set
-             */
-            @Override
-            public void windowClosing(@SuppressWarnings("unused") WindowEvent aE) {
-                if (tempEscapeProxyFrame.getShutdownAndExitAction() == null) {
-                    shutdownAndExit();
-                } else {
-                    windowIconified(aE);
-                    if (SystemTray.isSupported()) {
-                        final TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
-                        tempTrayIcon.displayMessage("Still running", "The proxy\nist still running...", MessageType.INFO);
-                    }
-                }
-            }
+	private static void shutdownAndExit() {
+		tempEscapeProxyFrame.setVisible(false);
+		saveConfig();
+		LOGGER.info("Window Closing");
+		final Timer tempTimer = new Timer(5000, new ActionListener() {
 
-            /**
-             * called when windows looses focus.
-             */
-            @Override
-            public void windowDeactivated(WindowEvent aE) {
-                saveConfig();
-                super.windowDeactivated(aE);
-            }
+			@Override
+			public void actionPerformed(@SuppressWarnings("unused") ActionEvent aE2) {
+				LOGGER.info("Exit");
+				setApplicationIsExiting(true);
+				System.exit(0);
+			}
+		});
+		tempTimer.start();
+		if (SystemTray.isSupported()) {
+			final TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
+			tempTrayIcon.displayMessage("Shutdown", "localhost proxy\nis shutting down...", MessageType.WARNING);
+		}
+	}
 
-            /**
-             *
-             */
-            @Override
-            public void windowIconified(WindowEvent aE) {
-                super.windowIconified(aE);
-                if (SystemTray.isSupported()) {
-                    tempEscapeProxyFrame.setVisible(false);
-                }
-            }
-        });
-    }
+	/**
+	 * @param aProperties
+	 */
+	private static void initWindowListener() {
+		tempEscapeProxyFrame.addWindowListener(new WindowAdapter() {
 
-    /**
-     *
-     */
-    private synchronized static void saveConfig() {
-        if (isApplicationIsExiting()) {
-            LOGGER.info("Not saving as already Sytem.exit() is in progress");
-            return;
-        }
-        if (previouslySavedProperties == null || !previouslySavedProperties.equals(tempProperties)) {
-            saveConfigFile();
-        } else {
-            LOGGER.debug("Skip saving same properties");
-        }
-        previouslySavedProperties = new Properties();
-        previouslySavedProperties.putAll(tempProperties);
-    }
+			/**
+			 * shutdown and exit if no other action is set
+			 */
+			@Override
+			public void windowClosing(@SuppressWarnings("unused") WindowEvent aE) {
+				if (tempEscapeProxyFrame.getShutdownAndExitAction() == null) {
+					shutdownAndExit();
+				} else {
+					windowIconified(aE);
+					if (SystemTray.isSupported()) {
+						final TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
+						tempTrayIcon.displayMessage("Still running", "The proxy\nist still running...", MessageType.INFO);
+					}
+				}
+			}
 
-    private static void saveConfigFile() {
-        try {
-            final File tempFile = getFile();
-            LOGGER.info("Save config " + tempFile.getAbsolutePath() + " ...");
-            final OutputStream tempOut = new FileOutputStream(tempFile);
-            tempProperties.storeToXML(tempOut, "");
-            tempOut.close();
-            LOGGER.info("Saved config " + tempFile.getAbsolutePath());
-        } catch (final IOException e) {
-            LOGGER.error("error", e);
-        }
-    }
+			/**
+			 * called when windows looses focus.
+			 */
+			@Override
+			public void windowDeactivated(WindowEvent aE) {
+				saveConfig();
+				super.windowDeactivated(aE);
+			}
 
-    /**
-     * @see #applicationIsExiting
-     */
-    public synchronized static boolean isApplicationIsExiting() {
-        return applicationIsExiting;
-    }
+			/**
+			 *
+			 */
+			@Override
+			public void windowIconified(WindowEvent aE) {
+				super.windowIconified(aE);
+				if (SystemTray.isSupported()) {
+					tempEscapeProxyFrame.setVisible(false);
+				}
+			}
+		});
+	}
 
-    /**
-     * @see #applicationIsExiting
-     */
-    public synchronized static void setApplicationIsExiting(boolean aApplicationIsExiting) {
-        applicationIsExiting = aApplicationIsExiting;
-    }
+	/**
+	 *
+	 */
+	private synchronized static void saveConfig() {
+		if (isApplicationIsExiting()) {
+			LOGGER.info("Not saving as already Sytem.exit() is in progress");
+			return;
+		}
+		if (previouslySavedProperties == null || !previouslySavedProperties.equals(tempProperties)) {
+			saveConfigFile();
+		} else {
+			LOGGER.debug("Skip saving same properties");
+		}
+		previouslySavedProperties = new Properties();
+		previouslySavedProperties.putAll(tempProperties);
+	}
+
+	private static void saveConfigFile() {
+		try {
+			final File tempFile = getFile();
+			LOGGER.info("Save config " + tempFile.getAbsolutePath() + " ...");
+			final OutputStream tempOut = new FileOutputStream(tempFile);
+			tempProperties.storeToXML(tempOut, "");
+			tempOut.close();
+			LOGGER.info("Saved config " + tempFile.getAbsolutePath());
+		} catch (final IOException e) {
+			LOGGER.error("error", e);
+		}
+	}
+
+	/**
+	 * @see #applicationIsExiting
+	 */
+	public synchronized static boolean isApplicationIsExiting() {
+		return applicationIsExiting;
+	}
+
+	/**
+	 * @see #applicationIsExiting
+	 */
+	public synchronized static void setApplicationIsExiting(boolean aApplicationIsExiting) {
+		applicationIsExiting = aApplicationIsExiting;
+	}
 }

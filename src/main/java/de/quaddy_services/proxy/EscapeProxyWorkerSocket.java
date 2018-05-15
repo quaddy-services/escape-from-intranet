@@ -263,6 +263,11 @@ public class EscapeProxyWorkerSocket extends Thread {
 		proxyDecisionCache.put(aUrl.getHost(), aProxyDecision);
 	}
 
+	public static synchronized void clearProxyDecisionCache() {
+		LOGGER.info("clearProxyDecisionCache");
+		proxyDecisionCache.clear();
+	}
+
 	/**
 	 *
 	 */

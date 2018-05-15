@@ -64,6 +64,8 @@ public class EscapeProxyFrame extends JFrame {
 
 	private final EscapeProxyConfig config;
 
+	private Action clearProxyDecisionAction;
+
 	private Action shutDownAndExitAction;
 
 	/**
@@ -215,6 +217,10 @@ public class EscapeProxyFrame extends JFrame {
 	private void createMenuBar() {
 		final JMenuBar menuBar = new JMenuBar();
 		final JMenu menuFile = new JMenu("Proxy");
+		Action tempClearProxyDecisionAction = getClearProxyDecisionAction();
+		if (tempClearProxyDecisionAction != null) {
+			menuFile.add(tempClearProxyDecisionAction);
+		}
 		Action tempShutdownAndExitAction = getShutdownAndExitAction();
 		if (tempShutdownAndExitAction != null) {
 			menuFile.add(tempShutdownAndExitAction);
@@ -258,5 +264,20 @@ public class EscapeProxyFrame extends JFrame {
 		final JLabel tempJLabel = new JLabel(aString);
 		tempJLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		return tempJLabel;
+	}
+
+	/**
+	 * @see #clearProxyDecisionAction
+	 */
+	public Action getClearProxyDecisionAction() {
+		return clearProxyDecisionAction;
+	}
+
+	/**
+	 * @see #clearProxyDecisionAction
+	 */
+	public void setClearProxyDecisionAction(Action aClearProxyDecision) {
+		clearProxyDecisionAction = aClearProxyDecision;
+		createMenuBar();
 	}
 }
