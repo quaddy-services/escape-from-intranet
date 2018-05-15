@@ -39,17 +39,18 @@ public class EscapeProxy {
 
 	private static Logger LOGGER;
 
-	private static boolean applicationIsExiting = false;
+	private boolean applicationIsExiting = false;
 
-	private static EscapeProxyFrame escapeProxyFrame;
-	private static Properties properties;
+	private EscapeProxyFrame escapeProxyFrame;
+	private Properties properties;
 
 	public static void main(String[] args) {
 		initializeLogger();
 
 		EventQueue.invokeLater(() -> {
 			try {
-				mainInEventQueue();
+				EscapeProxy tempEscapeProxy = new EscapeProxy();
+				tempEscapeProxy.mainInEventQueue();
 			} catch (IOException e) {
 				LOGGER.error("Error initializing", e);
 				System.exit(5);
@@ -62,7 +63,7 @@ public class EscapeProxy {
 	 * @throws IOException
 	*
 	*/
-	private static void mainInEventQueue() throws IOException {
+	private void mainInEventQueue() throws IOException {
 		LOGGER.info("Start");
 		properties = readConfig();
 
@@ -109,14 +110,14 @@ public class EscapeProxy {
 	/**
 		 *
 		 */
-	protected static void clearProxyDecision() {
+	protected void clearProxyDecision() {
 		EscapeProxyWorkerSocket.clearProxyDecisionCache();
 	}
 
 	/**
 	 *
 	 */
-	private static String getFrameTitle() {
+	private String getFrameTitle() {
 		final Properties tempProperties = new Properties();
 		final InputStream tempIn = EscapeProxy.class.getResourceAsStream("/META-INF/maven/de.quaddy_services/escape-from-intranet/pom.properties");
 		if (tempIn != null) {
@@ -134,7 +135,7 @@ public class EscapeProxy {
 	/**
 	 *
 	 */
-	private static void addStatusListener(EscapeProxyConfig aEscapeProxyConfig) {
+	private void addStatusListener(EscapeProxyConfig aEscapeProxyConfig) {
 
 		aEscapeProxyConfig.addStatusListener(new PortStatusListener() {
 
@@ -165,7 +166,7 @@ public class EscapeProxy {
 	/**
 	 * @return
 	 */
-	private static synchronized Properties readConfig() {
+	private synchronized Properties readConfig() {
 		final Properties tempProperties = new Properties();
 		final File tempFile = getFile();
 		if (tempFile.exists()) {
@@ -187,19 +188,19 @@ public class EscapeProxy {
 	/**
 	 *
 	 */
-	private static File getFile() {
+	private File getFile() {
 		final File tempFile = new File(System.getProperty("user.home") + "/" + "escape-from-intranet.xml");
 		return tempFile;
 	}
 
-	private static Image[] trayImage;
+	private Image[] trayImage;
 
-	private static Properties previouslySavedProperties;
+	private Properties previouslySavedProperties;
 
 	/**
 	 * @param aEscapeProxyConfig
 	 */
-	private static void initSystemTray(EscapeProxyConfig aEscapeProxyConfig) {
+	private void initSystemTray(EscapeProxyConfig aEscapeProxyConfig) {
 		if (SystemTray.isSupported()) {
 			EventQueue.invokeLater(new Runnable() {
 				/**
@@ -265,7 +266,7 @@ public class EscapeProxy {
 	/**
 	 * @throws IOException
 	 */
-	private static Image getImage(String aString) throws IOException {
+	private Image getImage(String aString) throws IOException {
 		final InputStream tempIn = EscapeProxy.class.getClassLoader().getResourceAsStream(aString);
 		final BufferedImage tempImage = ImageIO.read(tempIn);
 		return tempImage;
@@ -274,7 +275,7 @@ public class EscapeProxy {
 	/**
 	 * @param aEscapeProxyConfig
 	 */
-	private static void setVisible(EscapeProxyConfig aEscapeProxyConfig) {
+	private void setVisible(EscapeProxyConfig aEscapeProxyConfig) {
 		EventQueue.invokeLater(new Runnable() {
 			/**
 			 *
@@ -291,7 +292,7 @@ public class EscapeProxy {
 		});
 	}
 
-	private static void shutdownAndExit() {
+	private void shutdownAndExit() {
 		escapeProxyFrame.setVisible(false);
 		saveConfig();
 		LOGGER.info("Window Closing");
@@ -314,7 +315,7 @@ public class EscapeProxy {
 	/**
 	 * @param aProperties
 	 */
-	private static void initWindowListener() {
+	private void initWindowListener() {
 		escapeProxyFrame.addWindowListener(new WindowAdapter() {
 
 			/**
@@ -358,7 +359,7 @@ public class EscapeProxy {
 	/**
 	 *
 	 */
-	private synchronized static void saveConfig() {
+	private synchronized void saveConfig() {
 		if (isApplicationIsExiting()) {
 			LOGGER.info("Not saving as already Sytem.exit() is in progress");
 			return;
@@ -372,7 +373,7 @@ public class EscapeProxy {
 		previouslySavedProperties.putAll(properties);
 	}
 
-	private static void saveConfigFile() {
+	private void saveConfigFile() {
 		try {
 			final File tempFile = getFile();
 			LOGGER.info("Save config " + tempFile.getAbsolutePath() + " ...");
@@ -388,14 +389,14 @@ public class EscapeProxy {
 	/**
 	 * @see #applicationIsExiting
 	 */
-	public synchronized static boolean isApplicationIsExiting() {
+	public synchronized boolean isApplicationIsExiting() {
 		return applicationIsExiting;
 	}
 
 	/**
 	 * @see #applicationIsExiting
 	 */
-	public synchronized static void setApplicationIsExiting(boolean aApplicationIsExiting) {
+	public synchronized void setApplicationIsExiting(boolean aApplicationIsExiting) {
 		applicationIsExiting = aApplicationIsExiting;
 	}
 }
