@@ -41,31 +41,31 @@ public class EscapeProxy {
 
 	private static boolean applicationIsExiting = false;
 
-	private static EscapeProxyFrame tempEscapeProxyFrame;
-	private static Properties tempProperties;
+	private static EscapeProxyFrame escapeProxyFrame;
+	private static Properties properties;
 
 	public static void main(String[] args) throws IOException {
 		initializeLogger();
 
 		LOGGER.info("Start");
-		tempProperties = readConfig();
+		properties = readConfig();
 
-		final EscapeProxyConfig tempEscapeProxyConfig = new EscapeProxyConfig(tempProperties);
+		final EscapeProxyConfig tempEscapeProxyConfig = new EscapeProxyConfig(properties);
 
-		tempEscapeProxyFrame = new EscapeProxyFrame(tempEscapeProxyConfig, getFrameTitle());
+		escapeProxyFrame = new EscapeProxyFrame(tempEscapeProxyConfig, getFrameTitle());
 
-		tempEscapeProxyFrame.setSize(new Dimension(500, 400));
-		tempEscapeProxyFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		tempEscapeProxyFrame.setShutdownAndExitAction(new AbstractAction("Shutdown and Exit") {
+		escapeProxyFrame.setSize(new Dimension(500, 400));
+		escapeProxyFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		escapeProxyFrame.setShutdownAndExitAction(new AbstractAction("Shutdown and Exit") {
 
 			private static final long serialVersionUID = 8818325653972860075L;
 
 			@Override
-			public void actionPerformed(ActionEvent event) {
+			public void actionPerformed(@SuppressWarnings("unused") ActionEvent event) {
 				shutdownAndExit();
 			}
 		});
-		tempEscapeProxyFrame.setClearProxyDecisionAction(new AbstractAction("Clear Proxy Decision") {
+		escapeProxyFrame.setClearProxyDecisionAction(new AbstractAction("Clear Proxy Decision") {
 
 			private static final long serialVersionUID = 1L;
 
@@ -128,7 +128,7 @@ public class EscapeProxy {
 
 					@Override
 					public void run() {
-						tempEscapeProxyFrame.setIconImage(trayImage[aOkFlag ? 1 : 0]);
+						escapeProxyFrame.setIconImage(trayImage[aOkFlag ? 1 : 0]);
 					}
 				});
 			}
@@ -197,9 +197,9 @@ public class EscapeProxy {
 						tempTrayIcon.addMouseListener(new MouseAdapter() {
 							@Override
 							public void mouseClicked(@SuppressWarnings("unused") MouseEvent aE) {
-								tempEscapeProxyFrame.setVisible(true);
-								tempEscapeProxyFrame.toFront();
-								tempEscapeProxyFrame.setState(Frame.NORMAL);
+								escapeProxyFrame.setVisible(true);
+								escapeProxyFrame.toFront();
+								escapeProxyFrame.setState(Frame.NORMAL);
 							}
 						});
 						tempSystemTray.add(tempTrayIcon);
@@ -238,7 +238,7 @@ public class EscapeProxy {
 					EventQueue.invokeLater(new Runnable() {
 						@Override
 						public void run() {
-							tempEscapeProxyFrame.setIconImage(trayImage[aOkFlag ? 1 : 0]);
+							escapeProxyFrame.setIconImage(trayImage[aOkFlag ? 1 : 0]);
 						}
 					});
 				}
@@ -265,18 +265,18 @@ public class EscapeProxy {
 			 */
 			@Override
 			public void run() {
-				tempEscapeProxyFrame.setIconImage(trayImage[0]);
-				tempEscapeProxyFrame.setVisible(true);
+				escapeProxyFrame.setIconImage(trayImage[0]);
+				escapeProxyFrame.setVisible(true);
 				final String tempProxyUser = aEscapeProxyConfig.getProxyUser();
 				if (tempProxyUser != null && tempProxyUser.length() > 0) {
-					tempEscapeProxyFrame.setState(Frame.ICONIFIED);
+					escapeProxyFrame.setState(Frame.ICONIFIED);
 				}
 			}
 		});
 	}
 
 	private static void shutdownAndExit() {
-		tempEscapeProxyFrame.setVisible(false);
+		escapeProxyFrame.setVisible(false);
 		saveConfig();
 		LOGGER.info("Window Closing");
 		final Timer tempTimer = new Timer(5000, new ActionListener() {
@@ -299,14 +299,14 @@ public class EscapeProxy {
 	 * @param aProperties
 	 */
 	private static void initWindowListener() {
-		tempEscapeProxyFrame.addWindowListener(new WindowAdapter() {
+		escapeProxyFrame.addWindowListener(new WindowAdapter() {
 
 			/**
 			 * shutdown and exit if no other action is set
 			 */
 			@Override
 			public void windowClosing(@SuppressWarnings("unused") WindowEvent aE) {
-				if (tempEscapeProxyFrame.getShutdownAndExitAction() == null) {
+				if (escapeProxyFrame.getShutdownAndExitAction() == null) {
 					shutdownAndExit();
 				} else {
 					windowIconified(aE);
@@ -333,7 +333,7 @@ public class EscapeProxy {
 			public void windowIconified(WindowEvent aE) {
 				super.windowIconified(aE);
 				if (SystemTray.isSupported()) {
-					tempEscapeProxyFrame.setVisible(false);
+					escapeProxyFrame.setVisible(false);
 				}
 			}
 		});
@@ -347,13 +347,13 @@ public class EscapeProxy {
 			LOGGER.info("Not saving as already Sytem.exit() is in progress");
 			return;
 		}
-		if (previouslySavedProperties == null || !previouslySavedProperties.equals(tempProperties)) {
+		if (previouslySavedProperties == null || !previouslySavedProperties.equals(properties)) {
 			saveConfigFile();
 		} else {
 			LOGGER.debug("Skip saving same properties");
 		}
 		previouslySavedProperties = new Properties();
-		previouslySavedProperties.putAll(tempProperties);
+		previouslySavedProperties.putAll(properties);
 	}
 
 	private static void saveConfigFile() {
@@ -361,7 +361,7 @@ public class EscapeProxy {
 			final File tempFile = getFile();
 			LOGGER.info("Save config " + tempFile.getAbsolutePath() + " ...");
 			final OutputStream tempOut = new FileOutputStream(tempFile);
-			tempProperties.storeToXML(tempOut, "");
+			properties.storeToXML(tempOut, "");
 			tempOut.close();
 			LOGGER.info("Saved config " + tempFile.getAbsolutePath());
 		} catch (final IOException e) {
