@@ -1,1 +1,14 @@
 language: java
+
+# https://docs.travis-ci.com/user/sonarcloud/
+addons:
+  sonarcloud:
+    organization: "quaddy-services-github" # the key of the org you chose at step #3
+    
+    # see SONAR_TOKEN property in https://travis-ci.org/quaddy-services/escape-from-intranet/settings
+    # token:
+    #   secure: "*********" # encrypted value of your token
+    
+script:
+  # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
