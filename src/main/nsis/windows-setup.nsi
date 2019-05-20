@@ -2,7 +2,7 @@ Name "escape-from-intranet"
 
 # Paths are relative to nsis file (src\main\nsis)
 
-OutFile "..\..\..\target\escape-from-intranet.exe"
+OutFile "..\..\..\target\escape-from-intranet-setup.exe"
 
 Icon "..\resources\online_ezx_icon.ico"
 
@@ -15,6 +15,8 @@ Page instfiles
 
 Section "Installer"
 
+LogSet on
+
 SetShellVarContext current
 
 SetOutPath "$INSTDIR"
@@ -25,6 +27,15 @@ File ..\..\..\target\escape-from-intranet.jar
 CreateDirectory "$SMPROGRAMS\Quaddy Services"
 
 var /GLOBAL JAVAEXE
+
+# javaw is on the path ? 
+SearchPath $JAVAEXE "javaw.exe"
+DetailPrint 'JAVAEXE via SearchPath=$JAVAEXE'
+# in case it is in the path, let windows search for javaw.exe each time it is starte
+# (to avoid setting versioned path informations e.g.
+#   C:\Program Files\Amazon Corretto\jdk11.0.3_7\bin )
+IfFileExists $JAVAEXE JreFound
+
 var /GLOBAL ProgramData
 ReadEnvStr $ProgramData ProgramData
 DetailPrint 'ProgramData=$ProgramData'
@@ -59,6 +70,11 @@ CreateShortCut \
     "$JAVAEXE" '-jar "$INSTDIR\escape-from-intranet.jar' \
    '$INSTDIR\online_ezx_icon.ico'
 
+CreateShortCut \
+   "$SMPROGRAMS\Quaddy Services\Uninstall escape-from-intranet.lnk" \
+    "$INSTDIR\Uninst.exe" \
+    '$INSTDIR\Uninst.exe'
+
 WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\escape-from-intranet" \
                  "DisplayName" "escape-from-intranet"
 
@@ -69,7 +85,7 @@ WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\escape-fro
                  "Publisher" "Quaddy Services"
 
 WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\escape-from-intranet" \
-                 "UninstallString" "$\"$INSTDIR\Uninst.exe$\""
+                 "UninstallString" "$INSTDIR\Uninst.exe"
 
 WriteUninstaller $INSTDIR\Uninst.exe
 
@@ -93,14 +109,17 @@ Section "Uninstall"
   DetailPrint 'INSTDIR=$INSTDIR'
 
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\escape-from-intranet"
-  Delete $INSTDIR\Uninst.exe ; delete self (see explanation below why this works)
+  Delete "$INSTDIR\install.log"
+  Delete "$INSTDIR\Uninst.exe" ; delete self (see explanation below why this works)
 
-  Delete $INSTDIR\escape-from-intranet.jar
-  Delete $INSTDIR\online_ezx_icon.ico
-  RMDir $INSTDIR
+  Delete "$INSTDIR\escape-from-intranet.jar"
+  Delete "$INSTDIR\online_ezx_icon.ico"
+  RMDir "$INSTDIR"
 
-  Delete "$SMPROGRAMS\Quaddy Services\escape-from-intranet.lnk"
   Delete "$SMPROGRAMS\Startup\escape-from-intranet.lnk"
+  
+  Delete "$SMPROGRAMS\Quaddy Services\escape-from-intranet.lnk"
+  Delete "$SMPROGRAMS\Quaddy Services\Uninstall escape-from-intranet.lnk"
   RMDir "$SMPROGRAMS\Quaddy Services"
 
 SectionEnd
