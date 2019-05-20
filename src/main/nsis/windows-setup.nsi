@@ -24,14 +24,21 @@ File ..\..\..\target\escape-from-intranet.jar
 
 CreateDirectory "$SMPROGRAMS\Quaddy Services"
 
+var /GLOBAL JAVAEXE
+var /GLOBAL ProgramData
+ReadEnvStr $ProgramData ProgramData
+DetailPrint 'ProgramData=$ProgramData'
+StrCpy $JAVAEXE "$ProgramData\Oracle\Java\javapath\javaw.exe"
+DetailPrint 'JAVAEXE via ProgramData=$JAVAEXE'
+IfFileExists $JAVAEXE JreFound
+
 ReadRegStr $R1 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment" "CurrentVersion"
 DetailPrint 'javaCurrentVersion=$R1'
 ReadRegStr $R0 HKLM "SOFTWARE\JavaSoft\Java Runtime Environment\$R1" "JavaHome"
 DetailPrint 'JavaHome=$R0'
-var /GLOBAL JAVAEXE
 StrCpy $JAVAEXE "$R0\bin\javaw.exe"
 
-DetailPrint 'JAVAEXE=$JAVAEXE'
+DetailPrint 'JAVAEXE via Reg=$JAVAEXE'
 
 IfFileExists $JAVAEXE JreFound
 
