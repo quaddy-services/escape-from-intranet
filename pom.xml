@@ -3,7 +3,7 @@
 	<groupId>de.quaddy_services</groupId>
 	<artifactId>escape-from-intranet</artifactId>
 	<packaging>jar</packaging>
-	<version>2019.5.20</version>
+	<version>2019.5.21</version>
 	<url>https://github.com/quaddy-services/escape-from-intranet</url>
 	<build>
 		<plugins>
