@@ -18,8 +18,6 @@ Page instfiles
 
 Section "Installer"
 
-LogSet on
-
 SetShellVarContext current
 
 SetOutPath "$INSTDIR"
