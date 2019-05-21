@@ -292,19 +292,21 @@ public class EscapeProxy {
 		});
 	}
 
+	private ActionListener shutdownAndExitActionListener = new ActionListener() {
+
+		@Override
+		public void actionPerformed(@SuppressWarnings("unused") ActionEvent aE2) {
+			LOGGER.info("Exit");
+			setApplicationIsExiting(true);
+			System.exit(0);
+		}
+	};
+
 	private void shutdownAndExit() {
 		escapeProxyFrame.setVisible(false);
 		saveConfig();
 		LOGGER.info("Window Closing");
-		final Timer tempTimer = new Timer(5000, new ActionListener() {
-
-			@Override
-			public void actionPerformed(@SuppressWarnings("unused") ActionEvent aE2) {
-				LOGGER.info("Exit");
-				setApplicationIsExiting(true);
-				System.exit(0);
-			}
-		});
+		final Timer tempTimer = new Timer(5000, shutdownAndExitActionListener);
 		tempTimer.start();
 		if (SystemTray.isSupported()) {
 			final TrayIcon tempTrayIcon = SystemTray.getSystemTray().getTrayIcons()[0];
