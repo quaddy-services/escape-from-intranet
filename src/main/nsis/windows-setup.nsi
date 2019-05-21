@@ -4,6 +4,9 @@ Name "escape-from-intranet"
 
 OutFile "..\..\..\target\escape-from-intranet-setup.exe"
 
+SetOverwrite on
+AllowSkipFiles off
+
 Icon "..\resources\online_ezx_icon.ico"
 
 RequestExecutionLevel user
@@ -21,8 +24,18 @@ SetShellVarContext current
 
 SetOutPath "$INSTDIR"
 # OutPath is workingdirectory for ShortCuts, too
+
+ClearErrors
 File ..\resources\online_ezx_icon.ico
+IfErrors 0 +3
+  MessageBox MB_ICONSTOP "online_ezx_icon.ico can not be copied it is in use"
+  Abort
+   
+ClearErrors
 File ..\..\..\target\escape-from-intranet.jar
+IfErrors 0 +3
+  MessageBox MB_ICONSTOP "escape-from-intranet.jar can not be copied"
+  Abort
 
 CreateDirectory "$SMPROGRAMS\Quaddy Services"
 
