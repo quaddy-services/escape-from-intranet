@@ -14,3 +14,14 @@ To run it
 
 See ![Screenshot](https://github.com/quaddy-services/escape-from-intranet/raw/master/src/site/resources/example-screenshot.png "Screenshot")
 
+# escape-from-intranet-setup
+
+In case you receive "Windows Defender SmartScreen prevented an unrecognized app from starting." after executing the setup
+
+![Setup fails](https://github.com/quaddy-services/escape-from-intranet/raw/master/src/site/resources/windows10-protects-your-pc.png "Setup fails")
+
+you need to trust the exe file by opening properties and "Unblock" the setup:
+
+![unblock-setup](https://github.com/quaddy-services/escape-from-intranet/raw/master/src/site/resources/unblock-setup.png "unblock-setup")
+
+
