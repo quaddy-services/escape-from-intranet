@@ -18,14 +18,14 @@ script:
   # see https://docs.travis-ci.com/user/environment-variables/
   - echo "TRAVIS_SECURE_ENV_VARS=${TRAVIS_SECURE_ENV_VARS}";
   - >
-    if ["${TRAVIS_SECURE_ENV_VARS}" = "true"]; then
+    if ["${TRAVIS_SECURE_ENV_VARS}" == true]; then
       echo;
       echo "Running sonar build";
       # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
       mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar;
     fi;
   - >
-    if ["${TRAVIS_SECURE_ENV_VARS}" = "false"]; then
+    if ["${TRAVIS_SECURE_ENV_VARS}" == false]; then
       echo;
       echo "Running pullrequest build";
       mvn clean install;
