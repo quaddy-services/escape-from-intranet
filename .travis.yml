@@ -13,15 +13,17 @@ script:
   # see https://community.sonarsource.com/t/travis-plugin-is-failing-on-external-pull-request/807/8
   # see https://docs.travis-ci.com/user/pull-requests#double-builds-on-pull-requests
   # see https://github.com/Shippable/support/issues/1144
+  - echo "SONAR_SCANNER_HOME=${SONAR_SCANNER_HOME}";
+  - echo "TRAVIS_PULL_REQUEST=${TRAVIS_PULL_REQUEST}";
   - >
-    if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
+    if ["${SONAR_SCANNER_HOME}" != ""]; then
       echo;
       echo "Running sonar build";
       # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
       mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar;
     fi;
   - >
-    if [[ "$TRAVIS_PULL_REQUEST" = "false" ]]; then
+    if ["${SONAR_SCANNER_HOME}" = ""]; then
       echo;
       echo "Running pullrequest build";
       mvn clean install;
