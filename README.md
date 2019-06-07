@@ -1,7 +1,7 @@
 # escape-from-intranet
 Escape out of intranet without dealing with authentication of corporate proxy
 
-Start with -DdefaultLogLevel=debug to see more log-entries in ${java.io.tmpdir}/escape-from-intranet.log
+Start with -DdefaultLogLevel=debug or trace to see more log-entries in ${java.io.tmpdir}/escape-from-intranet.log
 
 To run it
 - make a "release" from source: just use mvn package and take target\escape-from-intranet.jar
