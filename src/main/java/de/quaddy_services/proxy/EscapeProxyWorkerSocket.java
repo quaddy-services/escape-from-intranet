@@ -168,10 +168,12 @@ public class EscapeProxyWorkerSocket extends Thread {
 					try {
 						// Just reply with "connection ok"
 						OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
-						outputStreamWriter.write("HTTP/1.1 200 Connection established" + "\r\n");
+						String tempHttpConnectionEstablishedMessage = "HTTP/1.1 200 Connection established";
+						outputStreamWriter.write(tempHttpConnectionEstablishedMessage + "\r\n");
 						outputStreamWriter.write("Proxy-agent: escape-from-intranet\r\n");
 						outputStreamWriter.write("\r\n");
 						outputStreamWriter.flush();
+						LOGGER.debug("Sent " + tempHttpConnectionEstablishedMessage);
 					} catch (IOException e2) {
 						LOGGER.error("Error sending response to " + socket, e2);
 						return null;
