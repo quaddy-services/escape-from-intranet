@@ -123,7 +123,16 @@ public class EscapeProxyWorkerSocket extends Thread {
 
 		tempFinalTargetSocket = tempProxySocket != null ? tempProxySocket : tempDirectSocket;
 		if (tempFinalTargetSocket == null) {
-			LOGGER.error("can not happen.");
+			LOGGER.error("can not happen: tempFinalTargetSocket == null");
+			try {
+				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
+				outputStreamWriter.write("HTTP/1.0 504 Gateway Timeout (no socket)\r\n");
+				outputStreamWriter.write("Proxy-agent: escape-from-intranet\r\n");
+				outputStreamWriter.write("\r\n");
+				outputStreamWriter.flush();
+			} catch (IOException e2) {
+				LOGGER.error("Error sending response to " + socket, e2);
+			}
 			return;
 		}
 
