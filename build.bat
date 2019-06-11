@@ -1,3 +1,4 @@
+echo on
 call mvn clean package
 if %errorlevel% == 1 pause
 if %errorlevel% == 1 goto end
