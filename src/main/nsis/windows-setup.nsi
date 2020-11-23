@@ -78,10 +78,16 @@ CreateShortCut \
     "$JAVAEXE" '-jar "$INSTDIR\escape-from-intranet.jar"' \
    '$INSTDIR\online_ezx_icon.ico'
 
-CreateShortCut \
+# https://stackoverflow.com/questions/2099055/nsis-overwrites-shortcuts
+
+IfFileExists "$SMPROGRAMS\Startup\escape-from-intranet.lnk" SkipStartupShortcut
+
+  CreateShortCut \
    "$SMPROGRAMS\Startup\escape-from-intranet.lnk" \
     "$JAVAEXE" '-jar "$INSTDIR\escape-from-intranet.jar' \
    '$INSTDIR\online_ezx_icon.ico'
+
+SkipStartupShortcut:
 
 CreateShortCut \
    "$SMPROGRAMS\Quaddy Services\Uninstall escape-from-intranet.lnk" \
