@@ -91,6 +91,29 @@ public class EscapeProxy {
 				clearProxyDecision();
 			}
 		});
+		escapeProxyFrame.setDefaultDirectAction(new AbstractAction("Default Proxy Decision:DIRECT") {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(@SuppressWarnings("unused") ActionEvent event) {
+				tempEscapeProxyConfig.fireLogEvent("default => DIRECT");
+				tempEscapeProxyConfig.setDefaultProxyDecision(ProxyDecision.DIRECT_PREFERRED);
+				clearProxyDecision();
+			}
+		});
+		escapeProxyFrame.setDefaultProxyAction(new AbstractAction("Default Proxy Decision:PROXY") {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(@SuppressWarnings("unused") ActionEvent event) {
+				tempEscapeProxyConfig.fireLogEvent("default => PROXY");
+				tempEscapeProxyConfig.setDefaultProxyDecision(ProxyDecision.PROXY_PREFERRED);
+				clearProxyDecision();
+			}
+		});
+		escapeProxyFrame.createMenuBar();
 
 		Thread.setDefaultUncaughtExceptionHandler(new LoggingUncaughtExceptionHandler());
 		// See java.awt.EventDispatchThread.handlerPropName
