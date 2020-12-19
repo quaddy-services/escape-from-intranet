@@ -3,13 +3,14 @@
 	<groupId>de.quaddy_services</groupId>
 	<artifactId>escape-from-intranet</artifactId>
 	<packaging>jar</packaging>
-	<version>2019.5.22</version>
+	<version>2020.12.19</version>
 	<url>https://github.com/quaddy-services/escape-from-intranet</url>
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -18,6 +19,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.4</version>
 				<configuration>
 				    <finalName>escape-from-intranet</finalName>
 					<archive>
@@ -30,6 +32,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.0</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -38,14 +41,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-eclipse-plugin</artifactId>
-				<configuration>
-					<downloadJavadocs>true</downloadJavadocs>
-					<downloadSources>true</downloadSources>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
