@@ -250,7 +250,7 @@ public class EscapeProxyWorkerSocket extends Thread {
 	/**
 	 *
 	 */
-	private static synchronized ProxyDecision getProxyDecision(URL aUrl) {
+	private ProxyDecision getProxyDecision(URL aUrl) {
 		String tempHost = aUrl.getHost();
 		if ("localhost".equals(tempHost)) {
 			LOGGER.info("localhost never goes via proxy: " + tempHost);
@@ -264,19 +264,30 @@ public class EscapeProxyWorkerSocket extends Thread {
 			LOGGER.info("localhost never goes via proxy: " + tempHost);
 			return ProxyDecision.DIRECT_ALWAYS;
 		}
-		return proxyDecisionCache.get(tempHost);
+		ProxyDecision tempProxyDecision;
+		synchronized (proxyDecisionCache) {
+			tempProxyDecision = proxyDecisionCache.get(tempHost);
+		}
+		if (tempProxyDecision != null) {
+			return tempProxyDecision;
+		}
+		return config.getProxyDecision();
 	}
 
 	/**
 	 *
 	 */
-	private static synchronized void setProxyDecision(URL aUrl, ProxyDecision aProxyDecision) {
-		proxyDecisionCache.put(aUrl.getHost(), aProxyDecision);
+	private static void setProxyDecision(URL aUrl, ProxyDecision aProxyDecision) {
+		synchronized (proxyDecisionCache) {
+			proxyDecisionCache.put(aUrl.getHost(), aProxyDecision);
+		}
 	}
 
-	public static synchronized void clearProxyDecisionCache() {
+	public static void clearProxyDecisionCache() {
 		LOGGER.info("clearProxyDecisionCache");
-		proxyDecisionCache.clear();
+		synchronized (proxyDecisionCache) {
+			proxyDecisionCache.clear();
+		}
 	}
 
 	/**
@@ -418,4 +429,5 @@ public class EscapeProxyWorkerSocket extends Thread {
 		}
 		LOGGER.info("finished");
 	}
+
 }

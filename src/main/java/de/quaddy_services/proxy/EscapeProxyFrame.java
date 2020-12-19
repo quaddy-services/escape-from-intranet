@@ -13,12 +13,15 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JPasswordField;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -67,6 +70,10 @@ public class EscapeProxyFrame extends JFrame {
 	private Action clearProxyDecisionAction;
 
 	private Action shutDownAndExitAction;
+
+	private AbstractAction defaultProxyAction;
+
+	private AbstractAction defaultDirectAction;
 
 	/**
 	 * @param aEscapeProxyConfig
@@ -208,24 +215,48 @@ public class EscapeProxyFrame extends JFrame {
 
 	protected void setShutdownAndExitAction(Action action) {
 		shutDownAndExitAction = action;
-		createMenuBar();
 	}
 
 	/**
 	 * create or re-create the menu bar according to setted actions.
 	 */
-	private void createMenuBar() {
+	public void createMenuBar() {
 		final JMenuBar menuBar = new JMenuBar();
 		final JMenu menuFile = new JMenu("Proxy");
-		Action tempClearProxyDecisionAction = getClearProxyDecisionAction();
-		if (tempClearProxyDecisionAction != null) {
-			menuFile.add(tempClearProxyDecisionAction);
-		}
 		Action tempShutdownAndExitAction = getShutdownAndExitAction();
 		if (tempShutdownAndExitAction != null) {
 			menuFile.add(tempShutdownAndExitAction);
 		}
 		menuBar.add(menuFile);
+
+		JMenu decisionMenu = new JMenu("Decision");
+		Action tempClearProxyDecisionAction = getClearProxyDecisionAction();
+		if (tempClearProxyDecisionAction != null) {
+			decisionMenu.add(tempClearProxyDecisionAction);
+		}
+
+		if (defaultDirectAction != null && defaultProxyAction != null) {
+
+			JRadioButtonMenuItem tempDirect = new JRadioButtonMenuItem(defaultDirectAction);
+			ProxyDecision tempConfigProxyDecision = config.getProxyDecision();
+			if (ProxyDecision.DIRECT_PREFERRED.equals(tempConfigProxyDecision)) {
+				tempDirect.setSelected(true);
+			}
+			JRadioButtonMenuItem tempProxy = new JRadioButtonMenuItem(defaultProxyAction);
+			if (ProxyDecision.PROXY_PREFERRED.equals(tempConfigProxyDecision)) {
+				tempProxy.setSelected(true);
+			}
+
+			ButtonGroup tempButtonGroup = new ButtonGroup();
+			tempButtonGroup.add(tempDirect);
+			tempButtonGroup.add(tempProxy);
+
+			decisionMenu.add(tempDirect);
+			decisionMenu.add(tempProxy);
+
+			menuBar.add(decisionMenu);
+		}
+
 		setJMenuBar(menuBar);
 	}
 
@@ -278,6 +309,20 @@ public class EscapeProxyFrame extends JFrame {
 	 */
 	public void setClearProxyDecisionAction(Action aClearProxyDecision) {
 		clearProxyDecisionAction = aClearProxyDecision;
-		createMenuBar();
 	}
+
+	/**
+	 * 
+	 */
+	public void setDefaultDirectAction(AbstractAction aAbstractAction) {
+		defaultDirectAction = aAbstractAction;
+	}
+
+	/**
+	 * 
+	 */
+	public void setDefaultProxyAction(AbstractAction aAbstractAction) {
+		defaultProxyAction = aAbstractAction;
+	}
+
 }
