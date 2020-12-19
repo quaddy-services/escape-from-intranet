@@ -1,4 +1,11 @@
 echo on
+git pull
+rmdir c:\temp\escape-from-intranet /s /q
+mkdir c:\temp\escape-from-intranet\src
+xcopy *.* c:\temp\escape-from-intranet
+xcopy src\*.* c:\temp\escape-from-intranet\src /s
+
+pushd c:\temp\escape-from-intranet
 call mvn clean package
 if %errorlevel% == 1 pause
 if %errorlevel% == 1 goto end
@@ -12,6 +19,9 @@ if x%NSIS_HOME%x == xx goto error_nsis
 
 %NSIS_HOME%\makensis /DdisplayVersion=%version% src/main/nsis/windows-setup.nsi
 if %errorlevel% == 1 goto error_nsis
+
+copy target\*.jar c:\temp /y
+copy target\*.exe c:\temp /y
 
 Echo Finished.
 
@@ -34,3 +44,5 @@ goto end
 
 
 :end
+
+popd
