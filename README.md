@@ -1,4 +1,12 @@
 # escape-from-intranet
+
+Table of contents
+* [Introduction](#introduction)
+* [Example settings](#example-settings)
+* [Windows Setup pitfalls](#windows-setup-pitfalls)
+
+# Introduction
+
 Escape out of intranet without dealing with authentication of corporate proxy
 
 Start with -DdefaultLogLevel=debug or trace to see more log-entries in ${java.io.tmpdir}/escape-from-intranet.log
@@ -14,7 +22,13 @@ To run it
 
 See ![Screenshot](https://github.com/quaddy-services/escape-from-intranet/raw/master/src/site/resources/example-screenshot.png "Screenshot")
 
-# escape-from-intranet-setup
+To configure the default behavior to take proxy first or try direct first you can switch 
+
+![Proxy Decision](https://github.com/quaddy-services/escape-from-intranet/raw/master/src/site/resources/proxy-decision.png "Proxy Decision")
+
+(which will be stored in your config and applies on next start, too)
+
+# Windows Setup pitfalls
 
 In case you receive "Windows Defender SmartScreen prevented an unrecognized app from starting." after executing the setup
 
